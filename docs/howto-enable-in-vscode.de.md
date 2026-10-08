@@ -59,7 +59,9 @@ der Zielversion. Fehlt der Befehl, das Fenster neu laden (**Developer: Reload Wi
 2. Auf **Vertrauen** klicken, wenn VS Code fragt, ob du den Autoren des Ordners vertraust. Ohne Vertrauen läuft die
    Extension eingeschränkt: keine Workspace-Verbindungen, keine Build- und Server-Befehle.
 3. Nach wenigen Sekunden erscheint im Explorer die Ansicht **Commerce Project** mit Platform, Modulen und deinen Custom-Extensions
-   in Ladereihenfolge. Falls nicht, den Pfad ausdrücklich setzen:
+   in Ladereihenfolge. Jede Extension zeigt ihre echten Ordner und Dateien (`src`, `gensrc`, `resources`, `build.xml`, …); der
+   Knoten **Commerce overview** darunter listet Typsystem, Beans, Spring, Prozesse, ImpEx und die Abhängigkeiten. Falls die
+   Ansicht fehlt, den Pfad ausdrücklich setzen:
 
    ```jsonc
    // .vscode/settings.json
@@ -133,19 +135,20 @@ mit Daten aktivieren, die nicht geteilt werden dürfen. Details: [mcp.md](mcp.md
 
 In den **Einstellungen** nach `sapcommerce` suchen.
 
-| Einstellung                                                                                                                                | Standard        | Bedeutung                                                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | --------------------------------------------------------------------------------------------- |
-| `sapcommerce.connections`                                                                                                                  | `[]`            | Verbindungen (ohne Passwörter)                                                                |
-| `sapcommerce.query.maxCount`                                                                                                               | `200`           | Zeilenlimit für Abfragen                                                                      |
-| `sapcommerce.requestTimeoutSeconds`                                                                                                        | `60`            | Timeout der hAC-Anfragen                                                                      |
-| `sapcommerce.confirmWrites`                                                                                                                | `true`          | Vor Commit, Import und Log-Level-Änderung nachfragen                                          |
-| `sapcommerce.impex.validation`                                                                                                             | `IMPORT_STRICT` | Validierungsmodus für ImpEx Validate/Import                                                   |
-| `sapcommerce.impex.diagnostics.severity`, `sapcommerce.flexsearch.…`, `sapcommerce.items.…`, `sapcommerce.beans.…`, `sapcommerce.spring.…` | `{}`            | Schweregrad einzelner Diagnosen ändern oder abschalten, z. B. `{"impex.macro.unused": "off"}` |
-| `sapcommerce.impex.format.*`, `sapcommerce.flexsearch.format.*`                                                                            | an              | Formatter-Optionen                                                                            |
-| `sapcommerce.project.roots`                                                                                                                | `[]`            | `hybris`-Verzeichnisse, wenn die Erkennung nicht reicht                                       |
-| `sapcommerce.project.showUnloadedExtensions`                                                                                               | `false`         | Auch Extensions zeigen, die nicht in `localextensions.xml` stehen                             |
-| `sapcommerce.java.*`                                                                                                                       | siehe oben      | Java-Setup                                                                                    |
-| `sapcommerce.mcp.enableQueries`                                                                                                            | `false`         | Lesende Abfragen für KI-Werkzeuge erlauben (nur Benutzer-Settings)                            |
+| Einstellung                                                                                                                                | Standard                     | Bedeutung                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------------------------------------- |
+| `sapcommerce.connections`                                                                                                                  | `[]`                         | Verbindungen (ohne Passwörter)                                                                |
+| `sapcommerce.query.maxCount`                                                                                                               | `200`                        | Zeilenlimit für Abfragen                                                                      |
+| `sapcommerce.requestTimeoutSeconds`                                                                                                        | `60`                         | Timeout der hAC-Anfragen                                                                      |
+| `sapcommerce.confirmWrites`                                                                                                                | `true`                       | Vor Commit, Import und Log-Level-Änderung nachfragen                                          |
+| `sapcommerce.impex.validation`                                                                                                             | `IMPORT_STRICT`              | Validierungsmodus für ImpEx Validate/Import                                                   |
+| `sapcommerce.impex.diagnostics.severity`, `sapcommerce.flexsearch.…`, `sapcommerce.items.…`, `sapcommerce.beans.…`, `sapcommerce.spring.…` | `{}`                         | Schweregrad einzelner Diagnosen ändern oder abschalten, z. B. `{"impex.macro.unused": "off"}` |
+| `sapcommerce.impex.format.*`, `sapcommerce.flexsearch.format.*`                                                                            | an                           | Formatter-Optionen                                                                            |
+| `sapcommerce.project.roots`                                                                                                                | `[]`                         | `hybris`-Verzeichnisse, wenn die Erkennung nicht reicht                                       |
+| `sapcommerce.project.showUnloadedExtensions`                                                                                               | `false`                      | Auch Extensions zeigen, die nicht in `localextensions.xml` stehen                             |
+| `sapcommerce.project.hiddenEntries`                                                                                                        | `.git`, `classes`, `/bin`, … | In Extensions ausgeblendete Dateien/Ordner (`/name` = nur oberste Ebene)                      |
+| `sapcommerce.java.*`                                                                                                                       | siehe oben                   | Java-Setup                                                                                    |
+| `sapcommerce.mcp.enableQueries`                                                                                                            | `false`                      | Lesende Abfragen für KI-Werkzeuge erlauben (nur Benutzer-Settings)                            |
 
 ## 9. Fehlersuche
 

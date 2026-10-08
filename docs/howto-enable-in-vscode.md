@@ -63,7 +63,9 @@ version appears. If the command is missing, reload the window (**Developer: Relo
 2. Click **Trust** when VS Code asks whether you trust the authors of the folder. Without trust the extension runs in a
    limited mode: no workspace connections, no build or server commands.
 3. After a few seconds the **Commerce Project** view appears in the Explorer: platform, modules and your custom extensions
-   in load order. If it does not, set the path explicitly:
+   in load order. Each extension shows its real folders and files (`src`, `gensrc`, `resources`, `build.xml`, …); the
+   **Commerce overview** node below them lists type system, beans, Spring, processes, ImpEx and the dependencies. If the
+   view does not appear, set the path explicitly:
 
    ```jsonc
    // .vscode/settings.json
@@ -137,19 +139,20 @@ for systems with data that must not be shared. Details: [mcp.md](mcp.md).
 
 Open **Settings** and search for `sapcommerce`.
 
-| Setting                                                                                                                                    | Default         | Meaning                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ----------------------------------------------------------------------------- |
-| `sapcommerce.connections`                                                                                                                  | `[]`            | Connections (no passwords)                                                    |
-| `sapcommerce.query.maxCount`                                                                                                               | `200`           | Row limit for queries                                                         |
-| `sapcommerce.requestTimeoutSeconds`                                                                                                        | `60`            | Timeout of hAC requests                                                       |
-| `sapcommerce.confirmWrites`                                                                                                                | `true`          | Ask before commit, import and log-level changes                               |
-| `sapcommerce.impex.validation`                                                                                                             | `IMPORT_STRICT` | Validation mode used for ImpEx validate/import                                |
-| `sapcommerce.impex.diagnostics.severity`, `sapcommerce.flexsearch.…`, `sapcommerce.items.…`, `sapcommerce.beans.…`, `sapcommerce.spring.…` | `{}`            | Change or switch off single diagnostics, e.g. `{"impex.macro.unused": "off"}` |
-| `sapcommerce.impex.format.*`, `sapcommerce.flexsearch.format.*`                                                                            | on              | Formatter options                                                             |
-| `sapcommerce.project.roots`                                                                                                                | `[]`            | `hybris` directories when auto-detection is not enough                        |
-| `sapcommerce.project.showUnloadedExtensions`                                                                                               | `false`         | Also list extensions that are not in `localextensions.xml`                    |
-| `sapcommerce.java.*`                                                                                                                       | see above       | Java setup                                                                    |
-| `sapcommerce.mcp.enableQueries`                                                                                                            | `false`         | Allow read-only queries for AI tools (user settings only)                     |
+| Setting                                                                                                                                    | Default                      | Meaning                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ----------------------------------------------------------------------------- |
+| `sapcommerce.connections`                                                                                                                  | `[]`                         | Connections (no passwords)                                                    |
+| `sapcommerce.query.maxCount`                                                                                                               | `200`                        | Row limit for queries                                                         |
+| `sapcommerce.requestTimeoutSeconds`                                                                                                        | `60`                         | Timeout of hAC requests                                                       |
+| `sapcommerce.confirmWrites`                                                                                                                | `true`                       | Ask before commit, import and log-level changes                               |
+| `sapcommerce.impex.validation`                                                                                                             | `IMPORT_STRICT`              | Validation mode used for ImpEx validate/import                                |
+| `sapcommerce.impex.diagnostics.severity`, `sapcommerce.flexsearch.…`, `sapcommerce.items.…`, `sapcommerce.beans.…`, `sapcommerce.spring.…` | `{}`                         | Change or switch off single diagnostics, e.g. `{"impex.macro.unused": "off"}` |
+| `sapcommerce.impex.format.*`, `sapcommerce.flexsearch.format.*`                                                                            | on                           | Formatter options                                                             |
+| `sapcommerce.project.roots`                                                                                                                | `[]`                         | `hybris` directories when auto-detection is not enough                        |
+| `sapcommerce.project.showUnloadedExtensions`                                                                                               | `false`                      | Also list extensions that are not in `localextensions.xml`                    |
+| `sapcommerce.project.hiddenEntries`                                                                                                        | `.git`, `classes`, `/bin`, … | Files/folders hidden inside extensions (`/name` = top level only)             |
+| `sapcommerce.java.*`                                                                                                                       | see above                    | Java setup                                                                    |
+| `sapcommerce.mcp.enableQueries`                                                                                                            | `false`                      | Allow read-only queries for AI tools (user settings only)                     |
 
 ## 9. Troubleshooting
 
