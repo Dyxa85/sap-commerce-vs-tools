@@ -237,9 +237,14 @@ describe('FlexibleSearch language server (end to end)', () => {
     const edit = new vscode.WorkspaceEdit();
     edit.set(formatDoc.uri, edits);
     await vscode.workspace.applyEdit(edit);
+    // the formatter keeps the line ending of the document (CRLF is the default for new files on Windows)
+    const eol = formatDoc.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
     assert.equal(
       formatDoc.getText(),
-      "SELECT {pk}\nFROM {Language}\nWHERE {isocode} = 'en'\n  AND {pk} IS NOT NULL",
+      `SELECT {pk}\nFROM {Language}\nWHERE {isocode} = 'en'\n  AND {pk} IS NOT NULL`.replace(
+        /\n/g,
+        eol,
+      ),
     );
   });
 
