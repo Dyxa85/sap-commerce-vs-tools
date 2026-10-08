@@ -1,6 +1,6 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
@@ -25,7 +25,7 @@ describe('variables and localextensions.xml', () => {
   it('resolves known variables and reports unknown ones', () => {
     const unknown: string[] = [];
     expect(resolveVariables('${HYBRIS_BIN_DIR}/custom/${NOPE}', vars, (n) => unknown.push(n))).toBe(
-      '/h/bin/custom/${NOPE}',
+      `${join('/h', 'bin')}/custom/\${NOPE}`,
     );
     expect(unknown).toEqual(['NOPE']);
   });
@@ -40,12 +40,12 @@ describe('variables and localextensions.xml', () => {
     </extensions></hybrisconfig>`;
     const local = parseLocalExtensions(text, '/h/config/localextensions.xml', vars);
     expect(local.scanPaths.map((p) => [p.dir, p.autoload])).toEqual([
-      ['/h/bin', false],
-      ['/h/bin/modules', true],
+      [resolve('/h/bin'), false],
+      [resolve('/h/bin/modules'), true],
     ]);
     expect(local.entries.map((e) => (e.kind === 'name' ? e.name : e.dir))).toEqual([
       'a',
-      '/h/bin/custom/b',
+      resolve('/h/bin/custom/b'),
     ]);
     expect(local.problems.some((p) => p.message.includes('needs a "name" or "dir"'))).toBe(true);
   });

@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { scanForExtensions } from './discover.js';
 import { parseExtensionInfo } from './extensioninfo.js';
 import { defaultVariables, parseLocalExtensions } from './localextensions.js';
@@ -86,7 +86,8 @@ export async function loadPlatform(hybrisDir: string): Promise<PlatformProject> 
           span: entry.span,
         });
     } else {
-      const info = [...available.values()].find((e) => e.dir === entry.dir);
+      const wanted = resolve(entry.dir);
+      const info = [...available.values()].find((e) => resolve(e.dir) === wanted);
       if (info) requested.add(info.name);
     }
   }

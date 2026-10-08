@@ -1,4 +1,4 @@
-import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { attr, attrNode, parseXml, walk } from '../xml/parser.js';
 import type { LocalExtensions, PlatformProblem } from './model.js';
 
@@ -44,7 +44,8 @@ export function parseLocalExtensions(
   for (const p of doc.problems) problem('error', p.message, p.span);
 
   const base = dirname(file);
-  const toAbsolute = (value: string): string => (isAbsolute(value) ? value : resolve(base, value));
+  // `resolve` also normalises separators, so `C:\\h\\bin/custom/x` and the scanned `C:\\h\\bin\\custom\\x` compare equal
+  const toAbsolute = (value: string): string => resolve(base, value);
 
   for (const el of walk(doc.root)) {
     if (el.name === 'path') {
