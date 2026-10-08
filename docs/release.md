@@ -14,10 +14,11 @@
 
 ## Cutting a release
 
-1. Update `packages/extension/CHANGELOG.md` (move _Unreleased_ under the new version) and bump the version in
+1. Write `docs/release-notes/vX.Y.Z.md` (the workflow uses it as the release text; versions below 1.0 are marked as pre-release).
+2. Update `packages/extension/CHANGELOG.md` (move _Unreleased_ under the new version) and bump the version in
    `packages/extension/package.json`.
-2. `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm --filter sap-commerce-vs-tools run test:host`
-3. `git tag vX.Y.Z && git push --tags`. The _Release_ workflow re-runs all checks, verifies that the tag matches the
+3. `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm --filter sap-commerce-vs-tools run test:host`
+4. `git tag vX.Y.Z && git push --tags`. The _Release_ workflow re-runs all checks, verifies that the tag matches the
    version, builds the minified bundles, packages the VSIX, attaches it to a GitHub release and publishes to the stores
    whose token is set.
 

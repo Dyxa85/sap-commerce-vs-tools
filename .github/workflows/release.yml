@@ -37,10 +37,18 @@ jobs:
       - name: Package VSIX (minified)
         working-directory: packages/extension
         run: pnpm run package
+      - name: Checksums
+        working-directory: packages/extension
+        run: sha256sum *.vsix > SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
         with:
-          files: packages/extension/*.vsix
+          files: |
+            packages/extension/*.vsix
+            packages/extension/SHA256SUMS.txt
+          body_path: docs/release-notes/${{ github.ref_name }}.md
+          # the notes file is written by hand per release; the generated list of changes is appended
           generate_release_notes: true
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
       - name: Publish to the Visual Studio Marketplace
         if: ${{ env.VSCE_PAT != '' }}
         working-directory: packages/extension
