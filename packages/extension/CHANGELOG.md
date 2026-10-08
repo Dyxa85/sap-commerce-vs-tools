@@ -5,6 +5,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-08
+
 ### Added
 
 - **Side bar "SAP Commerce"** (hexagon icon in the activity bar) that gathers the views: **Connections** (list with the
@@ -30,6 +32,12 @@ versions follow [Semantic Versioning](https://semver.org/).
   (`com/acme/core/service`) and source folders labelled. The former type system / beans / Spring / process / ImpEx
   groups and the dependencies moved into a _Commerce overview_ node below. Build output (`classes`, `eclipsebin`, `bin`)
   is hidden; see `sapcommerce.project.hiddenEntries`. New files appear without a manual refresh.
+
+### Fixed
+
+- A login that was still running while the password or the connection settings changed could put an authenticated
+  client back into the cache, so the next request skipped the password prompt. Such a login now starts over.
+- `sapcommerce.project.hiddenEntries` is read without a resource and is therefore a window setting (it logged a warning).
 
 ## [0.1.0] - 2026-10-08
 

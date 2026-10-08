@@ -10,7 +10,7 @@ build and run the platform, and give your AI assistant read-only knowledge of yo
 > **Unofficial project.** Not affiliated with, endorsed by, or sponsored by SAP SE or any other company.
 > "SAP" and "SAP Commerce" are trademarks of SAP SE and are used here only to describe compatibility.
 
-**Target platform:** SAP Commerce `2211-jdk21` · **VS Code:** 1.101 or newer · **Status:** first release candidate (0.1.0)
+**Target platform:** SAP Commerce `2211-jdk21` · **VS Code:** 1.101 or newer · **Status:** release candidate (0.1.1)
 
 ## Get it running in two minutes
 
