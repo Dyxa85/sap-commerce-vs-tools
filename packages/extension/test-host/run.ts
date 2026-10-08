@@ -35,7 +35,7 @@ async function main(): Promise<void> {
       const text = readFileSync(report, 'utf8');
       console.log(`\n${text}`);
       // on GitHub Actions the failures also become annotations (visible without downloading logs)
-      if (process.env.GITHUB_ACTIONS && /\d+ failing/.test(text)) {
+      if (process.env.GITHUB_ACTIONS && /[1-9]\d* failing/.test(text)) {
         const failing = text
           .split(/\r?\n/)
           .filter((line) => !line.trimStart().startsWith('✔'))
