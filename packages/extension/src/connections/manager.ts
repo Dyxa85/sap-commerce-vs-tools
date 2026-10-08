@@ -32,6 +32,11 @@ export class ConnectionManager implements vscode.Disposable {
   private readonly clients = new Map<string, CachedClient>();
   /** Connections whose plain-HTTP warning was confirmed in this session. */
   private readonly acknowledgedInsecure = new Set<string>();
+  /**
+   * Bumped whenever the credentials or settings of a connection change. A login that started before the change must
+   * not put its client into the cache afterwards.
+   */
+  private readonly generations = new Map<string, number>();
   private readonly emitter = new vscode.EventEmitter<void>();
   private readonly subscription: vscode.Disposable;
   private reportedProblems = '';
@@ -131,6 +136,7 @@ export class ConnectionManager implements vscode.Disposable {
   }
 
   async storePassword(connection: ConnectionConfig, password: string): Promise<void> {
+    this.bump(connection.id); // logins that are already running used the old password
     await this.context.secrets.store(ConnectionManager.secretKey(connection), password);
     this.log.addSecret(password);
     this.dropClient(connection.id); // an already authenticated client must not outlive a password change
@@ -153,6 +159,7 @@ export class ConnectionManager implements vscode.Disposable {
    */
   async clientFor(connection: ConnectionConfig, signal?: AbortSignal): Promise<HacClient> {
     const fingerprint = this.fingerprint(connection);
+    const generation = this.generations.get(connection.id) ?? 0;
     const cached = this.clients.get(connection.id);
     if (cached?.fingerprint === fingerprint) return cached.client;
     cached?.client.dispose();
@@ -198,6 +205,11 @@ export class ConnectionManager implements vscode.Disposable {
       });
       try {
         await client.login(signal);
+        if ((this.generations.get(connection.id) ?? 0) !== generation) {
+          // the password or the settings changed while this login was running: start over with the current ones
+          client.dispose();
+          return this.clientFor(connection, signal);
+        }
         if (!fromStore) await this.context.secrets.store(key, password);
         this.clients.set(connection.id, { client, fingerprint });
         this.log.info(
@@ -226,7 +238,12 @@ export class ConnectionManager implements vscode.Disposable {
     return Math.min(Math.max(seconds, 5), 900) * 1000;
   }
 
+  private bump(id: string): void {
+    this.generations.set(id, (this.generations.get(id) ?? 0) + 1);
+  }
+
   private dropClient(id: string): void {
+    this.bump(id);
     this.clients.get(id)?.client.dispose();
     this.clients.delete(id);
   }

@@ -231,7 +231,7 @@ describe('credentials', () => {
     } finally {
       restore();
     }
-    assert.equal(prompts, 1);
+    assert.equal(prompts, 1, `prompts=${prompts}, result=${api.results.lastModel?.kind}`);
     assert.equal(api.results.lastModel?.kind, 'query');
     assert.equal(await api.manager.hasPassword(connection), true);
   });
