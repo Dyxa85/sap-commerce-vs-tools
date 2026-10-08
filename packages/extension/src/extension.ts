@@ -10,6 +10,7 @@ import { registerDiagramCommands } from './commands/diagrams.js';
 import { registerTypeCommands } from './commands/types.js';
 import { registerConnectionCommands } from './connections/commands.js';
 import { ConnectionManager } from './connections/manager.js';
+import type { ConnectionConfig } from './connections/model.js';
 import { History } from './history.js';
 import { ResultsPanel } from './ui/results-panel.js';
 import { DiagramPanel } from './ui/diagram-panel.js';
@@ -38,6 +39,8 @@ export interface TestApi {
   sideBar: SideBar;
   /** Time `activate` took (the language server and the project model start afterwards, in the background). */
   activationMs: number;
+  /** The password stored for a connection, to check what the secret storage really holds. */
+  readSecret: (connection: ConnectionConfig) => Thenable<string | undefined>;
 }
 
 export function activate(context: vscode.ExtensionContext): TestApi | undefined {
@@ -95,6 +98,7 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
         connectionsPanel,
         sideBar,
         activationMs,
+        readSecret: (connection) => context.secrets.get(ConnectionManager.secretKey(connection)),
       }
     : undefined;
 }

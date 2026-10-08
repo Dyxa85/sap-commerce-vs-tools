@@ -18,6 +18,16 @@ async function configure(extra: Record<string, unknown> = {}, name = 'Mock'): Pr
   await api.manager.setActive(connection.id);
 }
 
+async function eventually<T>(check: () => Promise<T | undefined>, timeoutMs = 3000): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const value = await check();
+    if (value !== undefined) return value;
+    if (Date.now() > deadline) throw new Error('timed out');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
 before(async () => {
   server = createMockHac();
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -219,6 +229,17 @@ describe('credentials', () => {
     const connection = api.manager.list()[0];
     assert.ok(connection);
     await api.manager.storePassword(connection, 'outdated-password');
+    // the secret storage must hand back what was just stored, and no authenticated client may be left over
+    const state = await eventually(async () =>
+      (await api.readSecret(connection)) === 'outdated-password' &&
+      !api.manager.hasCachedClient(connection.id)
+        ? 'ready'
+        : undefined,
+    ).catch(
+      async () =>
+        `secret=${await api.readSecret(connection)}, cached=${api.manager.hasCachedClient(connection.id)}`,
+    );
+    assert.equal(state, 'ready', `precondition not met: ${state}`);
 
     let prompts = 0;
     const restore = stubWindow('showInputBox', async () => {

@@ -238,6 +238,11 @@ export class ConnectionManager implements vscode.Disposable {
     return Math.min(Math.max(seconds, 5), 900) * 1000;
   }
 
+  /** True while an authenticated client is cached for the connection (used by tests). */
+  hasCachedClient(id: string): boolean {
+    return this.clients.has(id);
+  }
+
   private bump(id: string): void {
     this.generations.set(id, (this.generations.get(id) ?? 0) + 1);
   }
