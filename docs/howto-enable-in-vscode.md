@@ -62,7 +62,8 @@ version appears. If the command is missing, reload the window (**Developer: Relo
    `hybris` folder itself).
 2. Click **Trust** when VS Code asks whether you trust the authors of the folder. Without trust the extension runs in a
    limited mode: no workspace connections, no build or server commands.
-3. After a few seconds the **Commerce Project** view appears in the Explorer: platform, modules and your custom extensions
+3. Click the **SAP Commerce** icon (a hexagon with `< >`) in the activity bar. After a few seconds the **Commerce Project** view
+   shows platform, modules and your custom extensions
    in load order. Each extension shows its real folders and files (`src`, `gensrc`, `resources`, `build.xml`, …); the
    **Commerce overview** node below them lists type system, beans, Spring, processes, ImpEx and the dependencies. If the
    view does not appear, set the path explicitly:
@@ -81,20 +82,27 @@ to it in the file. Platform and extensions stay in **Commerce Project**.
 
 The editor features (ImpEx, FlexibleSearch, items/beans/Spring/process XML, diagrams) now work – no connection required.
 
-## 4. Connect to your hAC
+## 4. Connect to your hAC (optional)
 
-1. Command Palette → **SAP Commerce: Add Connection…**
-2. Enter a name (`Local`, `Dev`, …), the hAC URL (`https://localhost:9002/hac`), your user name, and whether to ignore
-   certificate errors. For a local instance with a self-signed certificate choose **Ignore certificate errors**; do not
+The **hAC** (hybris Administration Console) is the web console of a _running_ instance. A connection lets the extension run
+queries, scripts and imports there. Without one, everything that reads your files still works – see
+[what needs a connection](features.md#what-the-hac-connection-is-for).
+
+1. Side bar → **Connections** → **+**, or Command Palette → **SAP Commerce: Open Connection Settings**. One page opens.
+2. Enter a name (`Local`, `Dev`, …), the hAC address (`https://localhost:9002/hac`), your user name and password, and whether to
+   ignore certificate errors. For a local instance with a self-signed certificate choose **Ignore certificate errors**; do not
    do that for remote systems.
 3. Mark production-like systems as **protected**: every write then asks for confirmation.
-4. Run **SAP Commerce: Test Connection**. VS Code asks for the password once and stores it in its secret storage (bound to
-   URL and user name). It never goes into your settings, logs or the repository.
+4. Press **Save**, then **Test connection**. The password is stored in VS Code's secret storage (bound to URL and user
+   name). It never goes into your settings, logs or the repository.
 
 The active connection is shown in the status bar; click it (or **Select Connection…**) to switch.
 Plain `http://` to a remote host asks for an explicit confirmation before the password is sent.
 
 ## 5. Try the features
+
+The **Features** view in the side bar lists everything below (and more) – click an entry to run it. Where each feature
+lives and what it needs is in the **[feature guide](features.md)**.
 
 | Do this                                                                                                  | What happens                                                                  |
 | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |

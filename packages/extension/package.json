@@ -66,12 +66,14 @@
       {
         "command": "sapcommerce.connection.test",
         "title": "Test Connection",
-        "category": "SAP Commerce"
+        "category": "SAP Commerce",
+        "icon": "$(plug)"
       },
       {
         "command": "sapcommerce.connection.openHac",
         "title": "Open hAC in Browser",
-        "category": "SAP Commerce"
+        "category": "SAP Commerce",
+        "icon": "$(link-external)"
       },
       {
         "command": "sapcommerce.flexsearch.run",
@@ -265,6 +267,46 @@
         "command": "sapcommerce.ccv2.reveal",
         "title": "Show Entry in manifest.json",
         "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.connections.open",
+        "title": "Open Connection Settings",
+        "category": "SAP Commerce",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "sapcommerce.connection.addStepByStep",
+        "title": "Add Connection (Step by Step)…",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.connection.activate",
+        "title": "Use Connection",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.connection.editItem",
+        "title": "Edit Connection",
+        "category": "SAP Commerce",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "sapcommerce.file.newImpex",
+        "title": "New ImpEx File",
+        "category": "SAP Commerce",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "sapcommerce.file.newFlexSearch",
+        "title": "New FlexibleSearch File",
+        "category": "SAP Commerce",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "sapcommerce.getStarted",
+        "title": "Get Started (Walkthrough)",
+        "category": "SAP Commerce",
+        "icon": "$(rocket)"
       }
     ],
     "configuration": {
@@ -570,7 +612,7 @@
             ".DS_Store",
             "/bin"
           ],
-          "scope": "resource",
+          "scope": "window",
           "markdownDescription": "Files and folders that the *Commerce Project* view does not show inside extensions. A plain name (`classes`) hides it at any depth, a leading slash (`/bin`) only the top-level entry of an extension."
         }
       }
@@ -688,6 +730,16 @@
           "command": "sapcommerce.diagram.type",
           "when": "resourceFilename =~ /-items\\.xml$/",
           "group": "sapcommerce@4"
+        },
+        {
+          "command": "sapcommerce.sql.run",
+          "when": "resourceExtname == .sql",
+          "group": "sapcommerce@1"
+        },
+        {
+          "command": "sapcommerce.groovy.run",
+          "when": "resourceExtname == .groovy",
+          "group": "sapcommerce@1"
         }
       ],
       "view/title": [
@@ -709,6 +761,21 @@
         {
           "command": "sapcommerce.ccv2.refresh",
           "when": "view == sapcommerce.ccv2",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sapcommerce.connection.add",
+          "when": "view == sapcommerce.connections",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sapcommerce.connections.open",
+          "when": "view == sapcommerce.connections",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sapcommerce.getStarted",
+          "when": "view == sapcommerce.actions",
           "group": "navigation@1"
         }
       ],
@@ -732,6 +799,21 @@
           "command": "sapcommerce.project.revealInExplorer",
           "when": "(view == sapcommerce.project && (viewItem == sapcommerce.extension || viewItem == sapcommerce.file || viewItem == sapcommerce.folder)) || (view == sapcommerce.ccv2 && (viewItem == sapcommerce.file || viewItem == sapcommerce.folder))",
           "group": "3_edit@2"
+        },
+        {
+          "command": "sapcommerce.connection.editItem",
+          "when": "view == sapcommerce.connections && viewItem == sapcommerce.connectionItem",
+          "group": "inline@1"
+        },
+        {
+          "command": "sapcommerce.connection.test",
+          "when": "view == sapcommerce.connections && viewItem == sapcommerce.connectionItem",
+          "group": "inline@2"
+        },
+        {
+          "command": "sapcommerce.connection.openHac",
+          "when": "view == sapcommerce.connections && viewItem == sapcommerce.connectionItem",
+          "group": "inline@3"
         }
       ],
       "commandPalette": [
@@ -790,6 +872,14 @@
         {
           "command": "sapcommerce.ccv2.refresh",
           "when": "sapcommerce.hasCcv2"
+        },
+        {
+          "command": "sapcommerce.connection.activate",
+          "when": "false"
+        },
+        {
+          "command": "sapcommerce.connection.editItem",
+          "when": "false"
         }
       ]
     },
@@ -813,17 +903,25 @@
       }
     ],
     "views": {
-      "explorer": [
+      "sapcommerce": [
+        {
+          "id": "sapcommerce.connections",
+          "name": "Connections",
+          "icon": "$(server-environment)"
+        },
+        {
+          "id": "sapcommerce.actions",
+          "name": "Features",
+          "icon": "$(list-flat)"
+        },
         {
           "id": "sapcommerce.project",
           "name": "Commerce Project",
-          "when": "sapcommerce.hasProject",
           "icon": "$(server-environment)"
         },
         {
           "id": "sapcommerce.ccv2",
           "name": "CCv2",
-          "when": "sapcommerce.hasCcv2",
           "icon": "$(cloud)"
         }
       ]
@@ -889,6 +987,115 @@
       {
         "id": "sapcommerce.mcp",
         "label": "SAP Commerce"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sapcommerce",
+          "title": "SAP Commerce",
+          "icon": "images/activity-bar.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sapcommerce.connections",
+        "contents": "No connection yet.\nA connection to the hybris Administration Console (hAC) lets you run FlexibleSearch, SQL, Groovy and ImpEx on an instance. Editors, project view and diagrams work without one.\n[Add Connection](command:sapcommerce.connections.open?%5B%22new%22%5D)\n[What can I do with it?](command:sapcommerce.getStarted)"
+      },
+      {
+        "view": "sapcommerce.project",
+        "contents": "No SAP Commerce project found in this folder.\nOpen the folder that contains the `hybris` directory, or tell the extension where it is.\n[Open Folder](command:workbench.action.files.openFolder)\n[Set Project Path](command:workbench.action.openSettings?%5B%22sapcommerce.project.roots%22%5D)"
+      },
+      {
+        "view": "sapcommerce.ccv2",
+        "contents": "No CCv2 repository found in this folder.\nA CCv2 repository has a `core-customize` folder with a `manifest.json` and a `hybris` directory.\n[Open Folder](command:workbench.action.files.openFolder)"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "sapcommerce.start",
+        "title": "Get started with SAP Commerce VS-Tools",
+        "description": "Find your project, connect to an instance, run a query, explore types and diagrams.",
+        "steps": [
+          {
+            "id": "project",
+            "title": "Open your SAP Commerce project",
+            "description": "Open the folder that contains the `hybris` directory. The **Commerce Project** view in the SAP Commerce side bar then shows platform, modules and your extensions with their real folders.\n[Show Commerce Project](command:sapcommerce.project.focus)",
+            "media": {
+              "markdown": "walkthrough/project.md"
+            },
+            "completionEvents": [
+              "onView:sapcommerce.project"
+            ]
+          },
+          {
+            "id": "connect",
+            "title": "Connect to your hAC (optional)",
+            "description": "A connection lets the extension run queries, scripts and imports on a running instance. Everything else works without it.\n[Open Connection Settings](command:sapcommerce.connections.open?%5B%22new%22%5D)",
+            "media": {
+              "markdown": "walkthrough/connect.md"
+            },
+            "completionEvents": [
+              "onCommand:sapcommerce.connections.open"
+            ]
+          },
+          {
+            "id": "query",
+            "title": "Run your first query",
+            "description": "Create a FlexibleSearch file and press `Cmd+Enter` / `Ctrl+Enter`. The rows appear as a table you can sort, filter and export.\n[New FlexibleSearch File](command:sapcommerce.file.newFlexSearch)",
+            "media": {
+              "markdown": "walkthrough/query.md"
+            },
+            "completionEvents": [
+              "onCommand:sapcommerce.file.newFlexSearch"
+            ]
+          },
+          {
+            "id": "impex",
+            "title": "Write and validate ImpEx",
+            "description": "The ImpEx editor knows your types and attributes. `Cmd+Alt+V` / `Ctrl+Alt+V` validates the file on the instance.\n[New ImpEx File](command:sapcommerce.file.newImpex)",
+            "media": {
+              "markdown": "walkthrough/impex.md"
+            },
+            "completionEvents": [
+              "onCommand:sapcommerce.file.newImpex"
+            ]
+          },
+          {
+            "id": "explore",
+            "title": "Find types and draw diagrams",
+            "description": "Jump to any type, attribute or enum value, and see how extensions depend on each other.\n[Go to Type…](command:sapcommerce.types.search)\n[Extension Dependency Diagram](command:sapcommerce.diagram.modules)",
+            "media": {
+              "markdown": "walkthrough/explore.md"
+            },
+            "completionEvents": [
+              "onCommand:sapcommerce.types.search"
+            ]
+          },
+          {
+            "id": "build",
+            "title": "Build, run and debug",
+            "description": "Run Ant targets, start the server and attach the debugger.\n[Run Ant Target…](command:sapcommerce.ant.run)",
+            "media": {
+              "markdown": "walkthrough/build.md"
+            },
+            "completionEvents": [
+              "onCommand:sapcommerce.ant.run"
+            ]
+          },
+          {
+            "id": "features",
+            "title": "See everything it can do",
+            "description": "The **Features** view is a table of contents of the whole extension, with the place where each feature also lives.\n[Open the Features view](command:sapcommerce.actions.focus)",
+            "media": {
+              "markdown": "walkthrough/features.md"
+            },
+            "completionEvents": [
+              "onView:sapcommerce.actions"
+            ]
+          }
+        ]
       }
     ]
   },

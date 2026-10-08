@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { PRODUCT_NAME, SUPPORTED_COMMERCE_VERSIONS } from '@sapcommerce-vstools/core';
 import { registerActions } from './commands/actions.js';
+import { ConnectionsPanel } from './ui/connections-panel.js';
+import { registerSideBar, type SideBar } from './views/register.js';
 import { registerCcv2View, type Ccv2Parts } from './ccv2/commands.js';
 import { CommerceTaskProvider } from './build/tasks.js';
 import { registerBuildCommands } from './commands/build.js';
@@ -32,6 +34,8 @@ export interface TestApi {
   tasks: CommerceTaskProvider;
   mcp: McpProvider;
   ccv2: Ccv2Parts;
+  connectionsPanel: ConnectionsPanel;
+  sideBar: SideBar;
   /** Time `activate` took (the language server and the project model start afterwards, in the background). */
   activationMs: number;
 }
@@ -51,7 +55,10 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
   void project.refresh();
   const ccv2 = registerCcv2View(context, log);
 
-  registerConnectionCommands(context, manager, log);
+  const connectionsPanel = new ConnectionsPanel(manager, log);
+  context.subscriptions.push(connectionsPanel);
+  registerConnectionCommands(context, manager, log, connectionsPanel);
+  const sideBar = registerSideBar(context, manager, connectionsPanel);
   registerActions({ context, manager, results, history, log });
   registerTypeCommands(context, languages, typePanel);
   registerDiagramCommands(context, languages, project, diagramPanel);
@@ -85,6 +92,8 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
         tasks,
         mcp,
         ccv2,
+        connectionsPanel,
+        sideBar,
         activationMs,
       }
     : undefined;

@@ -19,12 +19,28 @@ Developer tools for **SAP Commerce** in VS Code. Talk to the hybris Administrati
 - **PK analyzer**, **log-level changes**, and a **history** of your queries and scripts.
 - **Several connections** (Local, Dev, Stage …) with a status bar switcher. Mark production-like systems as _protected_.
 
+## Where to find things
+
+Click the **SAP Commerce** icon (a hexagon with `< >`) in the activity bar: **Connections**, **Features** (a clickable table
+of contents of everything the extension does), **Commerce Project** and **CCv2**. In the editor you get language support,
+title-bar buttons, the right-click menu and the shortcuts `Cmd/Ctrl+Enter` (run query), `Cmd/Ctrl+Alt+V` (validate ImpEx)
+and `Cmd/Ctrl+Alt+T` (search types). Everything is also in the Command Palette under `SAP Commerce`. A guided tour is under
+**Welcome → Walkthroughs**.
+
+## What is the hAC connection for?
+
+The hAC (hybris Administration Console) is the web console of a **running** instance. With a connection you can run
+FlexibleSearch, SQL and Groovy, validate and import ImpEx, use the PK analyzer and change log levels. Without one, the
+editors, project views, diagrams, build commands and AI project tools still work.
+
 ## Getting started
 
-1. Run **SAP Commerce: Add Connection…** (Command Palette) – e.g. `https://localhost:9002/hac`.
-   For a local instance with a self-signed certificate choose _Ignore certificate errors_.
-2. Open a file, select a query and run **SAP Commerce: Run FlexibleSearch Query**.
-3. The password is requested on first use and stored in VS Code's secret storage – never in your settings.
+1. Open the folder that contains your `hybris` directory.
+2. Side bar → **Connections** → **+** (or **SAP Commerce: Open Connection Settings**): hAC address (e.g.
+   `https://localhost:9002/hac`), user, password, **Test connection**. For a local instance with a self-signed certificate
+   tick _Ignore certificate errors_.
+3. **New FlexibleSearch File** (in the **Features** view), type a query, press `Cmd/Ctrl+Enter`.
+4. The password is stored in VS Code's secret storage – never in your settings.
 
 ## Security
 

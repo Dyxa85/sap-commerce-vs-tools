@@ -58,7 +58,7 @@ der Zielversion. Fehlt der Befehl, das Fenster neu laden (**Developer: Reload Wi
    `hybris`-Ordner selbst auch).
 2. Auf **Vertrauen** klicken, wenn VS Code fragt, ob du den Autoren des Ordners vertraust. Ohne Vertrauen läuft die
    Extension eingeschränkt: keine Workspace-Verbindungen, keine Build- und Server-Befehle.
-3. Nach wenigen Sekunden erscheint im Explorer die Ansicht **Commerce Project** mit Platform, Modulen und deinen Custom-Extensions
+3. Klicke in der Aktivitätsleiste auf das Symbol **SAP Commerce** (Sechseck mit `< >`). Nach wenigen Sekunden zeigt die Ansicht **Commerce Project** mit Platform, Modulen und deinen Custom-Extensions
    in Ladereihenfolge. Jede Extension zeigt ihre echten Ordner und Dateien (`src`, `gensrc`, `resources`, `build.xml`, …); der
    Knoten **Commerce overview** darunter listet Typsystem, Beans, Spring, Prozesse, ImpEx und die Abhängigkeiten. Falls die
    Ansicht fehlt, den Pfad ausdrücklich setzen:
@@ -77,20 +77,27 @@ zum Eintrag in der Datei. Platform und Extensions bleiben in **Commerce Project*
 
 Die Editor-Funktionen (ImpEx, FlexibleSearch, items/beans/Spring/Prozess-XML, Diagramme) laufen jetzt – ohne Verbindung.
 
-## 4. Mit der hAC verbinden
+## 4. Mit der hAC verbinden (optional)
 
-1. Befehlspalette → **SAP Commerce: Add Connection…**
-2. Name (`Local`, `Dev`, …), hAC-URL (`https://localhost:9002/hac`), Benutzername und die Frage nach Zertifikatsfehlern
-   angeben. Bei einer lokalen Instanz mit selbstsigniertem Zertifikat **Ignore certificate errors** wählen – nicht bei
+Die **hAC** (hybris Administration Console) ist die Web-Konsole einer _laufenden_ Instanz. Eine Verbindung lässt die Extension
+dort Abfragen, Skripte und Imports ausführen. Ohne Verbindung geht alles, was nur deine Dateien liest – siehe
+[was eine Verbindung braucht](features.de.md#wofür-ist-die-hac-verbindung).
+
+1. Seitenleiste → **Connections** → **+**, oder Befehlspalette → **SAP Commerce: Open Connection Settings**. Es öffnet sich eine Seite.
+2. Name (`Local`, `Dev`, …), hAC-Adresse (`https://localhost:9002/hac`), Benutzername, Passwort und die Frage nach
+   Zertifikatsfehlern angeben. Bei einer lokalen Instanz mit selbstsigniertem Zertifikat **Ignore certificate errors** wählen – nicht bei
    entfernten Systemen.
 3. Produktionsnahe Systeme als **protected** markieren: Jede schreibende Aktion fragt dann nach.
-4. **SAP Commerce: Test Connection** ausführen. VS Code fragt einmal nach dem Passwort und legt es im Secret Storage ab
-   (gebunden an URL und Benutzer). Es landet nie in Settings, Logs oder im Repository.
+4. **Save** drücken, dann **Test connection**. Das Passwort liegt im Secret Storage von VS Code (gebunden an URL und
+   Benutzer). Es landet nie in Settings, Logs oder im Repository.
 
 Die aktive Verbindung steht in der Statusleiste; ein Klick darauf (oder **Select Connection…**) wechselt sie.
 Unverschlüsseltes `http://` zu einem entfernten Host verlangt vor dem Senden des Passworts eine ausdrückliche Bestätigung.
 
 ## 5. Funktionen ausprobieren
+
+Die Ansicht **Features** in der Seitenleiste listet alles Folgende (und mehr) – ein Klick führt es aus. Wo jede Funktion
+zu finden ist und was sie braucht, steht in der **[Feature-Übersicht](features.de.md)**.
 
 | Mach das                                                                                    | Ergebnis                                                                               |
 | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |

@@ -7,7 +7,17 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **CCv2 view** in the Explorer (appears for a repository with `core-customize/manifest.json`): the repository as it is on
+- **Side bar "SAP Commerce"** (hexagon icon in the activity bar) that gathers the views: **Connections** (list with the
+  active one marked; inline edit, test and open-hAC buttons), **Features** (a clickable table of contents of the whole
+  extension with the place where each feature also lives), **Commerce Project** and **CCv2**. The two project views moved
+  here from the Explorer and explain themselves when empty.
+- **Connection settings page** (_Open Connection Settings_): add, edit, test and remove connections on one page, with an
+  explanation of what a connection is for. It replaces the chain of input boxes (still available as _Add Connection (Step
+  by Step)…_).
+- **Walkthrough** _Get started with SAP Commerce VS-Tools_ and a one-time hint after the first start; _New ImpEx File_ and
+  _New FlexibleSearch File_ commands; context-menu entries to run SQL (`.sql`) and Groovy (`.groovy`).
+
+- **CCv2 view** in the side bar (explains itself when there is no CCv2 repository; for one with `core-customize/manifest.json`): the repository as it is on
   disk (`core-customize`, `js-storefront`, scripts, …), an outline of `manifest.json` (commerce suite and Solr version,
   extension packs, extensions, properties, config files per persona, aspects with webapps, anything SAP adds later; a click
   jumps to the entry; invalid JSON is reported), and under `hybris` only what a project owns (`config`, `bin/custom`).

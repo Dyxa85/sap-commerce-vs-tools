@@ -16,12 +16,39 @@ build and run the platform, and give your AI assistant read-only knowledge of yo
 
 1. Download `sap-commerce-vs-tools-<version>.vsix` from the [latest release](https://github.com/Dyxa85/sap-commerce-vs-tools/releases/latest).
 2. In VS Code: **Extensions** view → `⋯` menu → **Install from VSIX…** and pick the file.
-3. Open the folder that contains your `hybris` directory, then run **SAP Commerce: Add Connection…** from the Command Palette.
+3. Open the folder that contains your `hybris` directory (or your CCv2 repository), then click the **SAP Commerce** icon
+   (a hexagon with `< >`) in the activity bar.
+4. Optional, for running queries and imports: in the side bar open **Connections** → **+** and enter your hAC address.
 
-Step by step: installing, connecting, first steps, all settings, building from source, and troubleshooting:
+A guided tour starts from **Welcome → Walkthroughs → Get started with SAP Commerce VS-Tools** (or the command
+**SAP Commerce: Get Started**). Step by step with all settings, building from source and troubleshooting:
 **[docs/howto-enable-in-vscode.md](docs/howto-enable-in-vscode.md)** ([Deutsch](docs/howto-enable-in-vscode.de.md)).
 
-## What you get
+## Where to find what
+
+| Place                          | What is there                                                                                                                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Side bar → SAP Commerce**    | **Connections** · **Features** (a clickable table of contents of everything) · **Commerce Project** · **CCv2**                                                                                                           |
+| **The editor**                 | Language support in `.impex`, `.flexibleSearch` and the commerce XML files; buttons in the title bar; right-click menu; `Cmd/Ctrl+Enter` runs a query, `Cmd/Ctrl+Alt+V` validates ImpEx, `Cmd/Ctrl+Alt+T` searches types |
+| **Command Palette**            | Type `SAP Commerce` – every command is listed                                                                                                                                                                            |
+| Status bar · Output · Settings | Active connection · log (**Output → SAP Commerce**) · search `sapcommerce`                                                                                                                                               |
+
+The complete list – every feature, where to find it, and what it needs – is the **[feature guide](docs/features.md)**
+([Deutsch](docs/features.de.md)).
+
+## What is the connection to the hAC for?
+
+The **hAC** (hybris Administration Console, usually `https://localhost:9002/hac`) is the web console of a **running**
+SAP Commerce instance. A _connection_ is its address plus a user name; the password stays in VS Code's secret storage.
+
+- **With a connection** you can run FlexibleSearch, SQL and Groovy, validate and import ImpEx, use the PK analyzer and
+  change log levels – from the editor, with results as a table.
+- **Without one** everything that reads your files works: the ImpEx/FlexibleSearch/XML editors, type search, diagrams,
+  the Commerce Project and CCv2 views, Ant build and server start, and the AI project tools.
+
+Set it up on one page: **side bar → Connections → +** (or **SAP Commerce: Open Connection Settings**).
+
+## What you get in short
 
 ### Work with your instance (hAC)
 
@@ -35,7 +62,7 @@ Step by step: installing, connecting, first steps, all settings, building from s
 
 - **ImpEx and FlexibleSearch editors** whose diagnostics mirror what the importer and the hAC really do (measured on a real instance, see [docs/impex-behaviour.md](docs/impex-behaviour.md)): unknown types and attributes with suggestions, macros, missing unique columns, `--` comments and trailing `;` that break the hAC, completion, hover, formatter, quick fixes.
 - **Project knowledge** from your `items.xml`, `beans.xml`, Spring and business process files: go to definition across extensions and into Java sources, completion for types, attributes, enum values and bean ids, override and alias awareness.
-- **Commerce Project view** in the Explorer: extensions in load order with their real folder structure (sources, resources, build files – like in an IDE), a commerce overview (type system, beans, Spring, processes, dependencies and dependents); problems in `localextensions.xml`.
+- **Commerce Project view** in the SAP Commerce side bar: extensions in load order with their real folder structure (sources, resources, build files – like in an IDE), a commerce overview (type system, beans, Spring, processes, dependencies and dependents); problems in `localextensions.xml`.
 - **CCv2 view**: the structure of your CCv2 repository (`core-customize`, `js-storefront`, …) with a readable outline of `manifest.json` – versions, extension packs, extensions, properties, config per persona, aspects and webapps. Works on the files; no Cloud Portal access needed.
 - **Type and bean preview** and **Go to Type, Attribute or Enum Value…**
 

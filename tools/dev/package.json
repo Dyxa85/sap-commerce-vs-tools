@@ -8,7 +8,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "demo:diagrams": "esbuild src/diagram-demo.ts --bundle --platform=node --format=esm --outfile=../../.demo/diagram-demo.mjs --log-level=error && node ../../.demo/diagram-demo.mjs",
-    "demo:images": "esbuild src/diagram-images.ts --bundle --platform=node --format=esm --outfile=../../.demo/diagram-images.mjs --log-level=error && node ../../.demo/diagram-images.mjs"
+    "demo:images": "esbuild src/diagram-images.ts --bundle --platform=node --format=esm --outfile=../../.demo/diagram-images.mjs --log-level=error && node ../../.demo/diagram-images.mjs",
+    "demo:connections": "esbuild src/connections-demo.ts --bundle --platform=node --format=esm --outfile=../../.demo/connections-demo.mjs --log-level=error && node ../../.demo/connections-demo.mjs"
   },
   "dependencies": {
     "@sapcommerce-vstools/core": "workspace:*"

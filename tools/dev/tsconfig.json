@@ -8,6 +8,7 @@
   "include": [
     "src",
     "../../packages/extension/src/ui/diagram-html.ts",
+    "../../packages/extension/src/ui/connections-html.ts",
     "../../packages/extension/src/ui/results-html.ts"
   ]
 }

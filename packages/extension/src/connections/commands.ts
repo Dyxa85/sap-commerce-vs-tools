@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import { HacAuthError, HacConnectionError } from '@sapcommerce-vstools/core';
-import { UserCancelled, type ConnectionManager } from './manager.js';
+import { checkConnection } from './check.js';
+import type { ConnectionManager } from './manager.js';
+import type { ConnectionsPanel } from '../ui/connections-panel.js';
 import { normalizeBaseUrl, slugify, type ConnectionConfig } from './model.js';
 import type { Logger } from '../util/log.js';
 
@@ -9,6 +10,7 @@ export function registerConnectionCommands(
   context: vscode.ExtensionContext,
   manager: ConnectionManager,
   log: Logger,
+  panel: ConnectionsPanel,
 ): void {
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
   status.command = 'sapcommerce.connection.select';
@@ -41,7 +43,9 @@ export function registerConnectionCommands(
     context.subscriptions.push(vscode.commands.registerCommand(id, fn));
   };
 
-  register('sapcommerce.connection.add', async () => {
+  // connections are managed on one page; the step-by-step input boxes remain for people who prefer them
+  register('sapcommerce.connection.add', () => panel.show('new'));
+  register('sapcommerce.connection.addStepByStep', async () => {
     const created = await runWizard(manager, undefined);
     if (created) await offerTest(manager, created, log);
   });
@@ -59,55 +63,31 @@ export function registerConnectionCommands(
           id: c.id,
         })),
         { label: '$(add) Add connection…', description: '', detail: '', id: '' },
+        { label: '$(gear) Manage connections…', description: '', detail: '', id: '*' },
       ],
       { title: 'Select SAP Commerce connection', matchOnDescription: true },
     );
     if (!picked) return;
     if (picked.id === '') return vscode.commands.executeCommand('sapcommerce.connection.add');
+    if (picked.id === '*') return panel.show();
     await manager.setActive(picked.id);
   });
 
-  register('sapcommerce.connection.edit', async () => {
-    const connection = await pickConnection(manager, 'Edit which connection?');
-    if (!connection) return;
-    const action = await vscode.window.showQuickPick(
-      [
-        { label: '$(edit) Edit details…', key: 'edit' },
-        { label: '$(key) Change password…', key: 'password' },
-        { label: '$(clear-all) Forget stored password', key: 'forget' },
-        { label: '$(trash) Remove connection', key: 'remove' },
-      ],
-      { title: connection.name },
-    );
-    switch (action?.key) {
-      case 'edit':
-        return runWizard(manager, connection);
-      case 'password':
-        return changePassword(manager, connection);
-      case 'forget':
-        await manager.forgetPassword(connection);
-        return vscode.window.showInformationMessage(
-          `Stored password for "${connection.name}" removed.`,
-        );
-      case 'remove': {
-        const sure = await vscode.window.showWarningMessage(
-          `Remove connection "${connection.name}" and its stored password?`,
-          { modal: true },
-          'Remove',
-        );
-        if (sure) await manager.remove(connection.id);
-      }
-    }
-  });
+  register('sapcommerce.connection.edit', () => panel.show());
 
-  register('sapcommerce.connection.test', async () => {
+  register('sapcommerce.connection.test', async (item?: ConnectionConfig) => {
     const connection =
-      manager.active() ?? (await pickConnection(manager, 'Test which connection?'));
+      (item?.id ? manager.list().find((c) => c.id === item.id) : undefined) ??
+      manager.active() ??
+      (await pickConnection(manager, 'Test which connection?'));
     if (connection) await offerTest(manager, connection, log, false);
   });
 
-  register('sapcommerce.connection.openHac', async () => {
-    const connection = manager.active() ?? (await pickConnection(manager, 'Open which hAC?'));
+  register('sapcommerce.connection.openHac', async (item?: ConnectionConfig) => {
+    const connection =
+      (item?.id ? manager.list().find((c) => c.id === item.id) : undefined) ??
+      manager.active() ??
+      (await pickConnection(manager, 'Open which hAC?'));
     if (connection) await vscode.env.openExternal(vscode.Uri.parse(connection.url));
   });
 }
@@ -220,20 +200,6 @@ async function runWizard(
   return connection;
 }
 
-async function changePassword(
-  manager: ConnectionManager,
-  connection: ConnectionConfig,
-): Promise<void> {
-  const password = await vscode.window.showInputBox({
-    title: `New password for ${connection.username} @ ${connection.name}`,
-    password: true,
-    ignoreFocusOut: true,
-  });
-  if (password === undefined) return;
-  await manager.storePassword(connection, password);
-  await vscode.window.showInformationMessage('Password stored in VS Code secret storage.');
-}
-
 async function offerTest(
   manager: ConnectionManager,
   connection: ConnectionConfig,
@@ -256,24 +222,14 @@ async function offerTest(
     async (_progress, token) => {
       const controller = new AbortController();
       token.onCancellationRequested(() => controller.abort());
-      try {
-        await manager.clientFor(connection, controller.signal);
-        void vscode.window.showInformationMessage(
-          `Connected to "${connection.name}" as ${connection.username}.`,
-        );
-      } catch (err) {
-        if (err instanceof UserCancelled) return;
-        log.error(`Connection test failed for "${connection.name}"`, err);
-        const hint =
-          err instanceof HacAuthError || err instanceof HacConnectionError
-            ? err.message
-            : 'Unexpected error – see the output channel.';
-        const choice = await vscode.window.showErrorMessage(
-          `Connection failed: ${hint}`,
-          'Show Log',
-        );
-        if (choice) log.show();
+      const result = await checkConnection(manager, connection, log, controller.signal);
+      if (result.cancelled) return;
+      if (result.ok) {
+        void vscode.window.showInformationMessage(result.message);
+        return;
       }
+      const choice = await vscode.window.showErrorMessage(result.message, 'Show Log');
+      if (choice) log.show();
     },
   );
 }
