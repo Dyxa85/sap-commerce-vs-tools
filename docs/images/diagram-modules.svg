@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 173 524" width="173" height="524" role="img" aria-label="Extension dependencies">
+<style>:root{--vscode-font-family:-apple-system,'Segoe UI',system-ui,sans-serif;--vscode-font-size:13px;--vscode-foreground:#cccccc;--vscode-editor-background:#1e1e1e;--vscode-editorWidget-background:#252526;--vscode-editorWidget-border:#5a5a5a;--vscode-focusBorder:#007fd4;--vscode-list-activeSelectionBackground:#094771;--vscode-list-activeSelectionForeground:#ffffff;--vscode-descriptionForeground:#9d9d9d;--vscode-charts-blue:#3794ff;--vscode-charts-orange:#d18616;--vscode-charts-purple:#b180d7;--vscode-charts-green:#89d185;--vscode-charts-red:#f14c4c;--vscode-charts-yellow:#cca700}
+
+
+
+.sub{color:var(--vscode-descriptionForeground)}
+
+
+
+
+
+svg text{font-family:var(--vscode-font-family);font-size:12px;fill:var(--vscode-foreground);pointer-events:none}
+.node rect{fill:var(--vscode-editorWidget-background);stroke:var(--vscode-editorWidget-border,#888);stroke-width:1.2}
+.node{cursor:pointer}.node:hover rect,.node:focus rect{stroke:var(--vscode-focusBorder);stroke-width:2}
+.node .detail{fill:var(--vscode-descriptionForeground);font-size:10.5px}
+.node-focus rect,.focus rect{fill:var(--vscode-list-activeSelectionBackground);stroke:var(--vscode-focusBorder);stroke-width:2}
+.node-focus text,.focus text{fill:var(--vscode-list-activeSelectionForeground)}
+.node-abstract rect{stroke-dasharray:5 3}
+.node-enum rect{stroke:var(--vscode-charts-purple)}.node-relation rect{stroke:var(--vscode-charts-orange)}
+.node-custom rect{stroke:var(--vscode-charts-blue);stroke-width:2}.node-platform rect{opacity:.75}
+.node-start rect{stroke:var(--vscode-charts-green);stroke-width:2.2}
+.node-end-succeeded rect{stroke:var(--vscode-charts-green);stroke-width:2.2}
+.node-end-failed rect,.node-end-error rect{stroke:var(--vscode-charts-red);stroke-width:2.2}
+.node-wait rect{stroke:var(--vscode-charts-yellow);stroke-width:1.8}
+.node-split rect,.node-join rect{stroke:var(--vscode-charts-blue);stroke-width:1.8}
+.node-scriptAction rect,.node-notify rect{stroke:var(--vscode-charts-purple);stroke-width:1.6}
+.edge path{fill:none;stroke:var(--vscode-descriptionForeground,#888);stroke-width:1.3;opacity:.85}
+.edge-reference path{stroke-dasharray:4 3;stroke:var(--vscode-charts-orange)}
+.edge.back path{stroke-dasharray:2 3;stroke:var(--vscode-charts-red)}
+.arrowhead{fill:var(--vscode-descriptionForeground,#888)}
+.edge-label{font-size:10.5px;fill:var(--vscode-descriptionForeground)}
+</style>
+<rect width="100%" height="100%" rx="8" fill="#1e1e1e"/>
+<text x="16" y="21" style="font-size:13px;font-weight:600;fill:#cccccc">Extension dependencies</text>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowhead"/></marker></defs><g transform="translate(0 30)">
+
+<g class="edge edge-requires"><path d="M 86.1 336 C 86.1 381, 86.1 381, 86.1 426" marker-end="url(#arrow)"/></g><g class="edge edge-requires"><path d="M 75.6 202 C 75.6 247, 86.1 247, 86.1 292" marker-end="url(#arrow)"/></g><g class="edge edge-requires"><path d="M 86.1 68 C 86.1 124, 157.2 124, 157.2 180 C 157.2 236, 86.1 236, 86.1 292" marker-end="url(#arrow)"/></g><g class="edge edge-requires"><path d="M 86.1 68 C 86.1 113, 75.6 113, 75.6 158" marker-end="url(#arrow)"/></g><g class="node node-custom" data-id="acmecore" tabindex="0" role="button"><title>acmecore</title><rect x="41.099999999999994" y="292" width="90" height="44" rx="6"/><text class="label" x="86.1" y="309" text-anchor="middle">acmecore</text><text class="detail" x="86.1" y="325" text-anchor="middle">1.0</text></g><g class="node node-platform" data-id="core" tabindex="0" role="button"><title>core</title><rect x="41.099999999999994" y="426" width="90" height="44" rx="6"/><text class="label" x="86.1" y="443" text-anchor="middle">core</text><text class="detail" x="86.1" y="459" text-anchor="middle">1.0</text></g><g class="node node-custom" data-id="acmefacades" tabindex="0" role="button"><title>acmefacades</title><rect x="24" y="158" width="103.2" height="44" rx="6"/><text class="label" x="75.6" y="184" text-anchor="middle">acmefacades</text></g><g class="node node-custom" data-id="acmeprocess" tabindex="0" role="button"><title>acmeprocess</title><rect x="34.5" y="24" width="103.2" height="44" rx="6"/><text class="label" x="86.1" y="50" text-anchor="middle">acmeprocess</text></g></g></svg>

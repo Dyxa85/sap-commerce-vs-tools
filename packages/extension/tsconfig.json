@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vscode", "mocha"],
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src", "test", "test-host", "esbuild.mjs", "esbuild.test.mjs"]
+}

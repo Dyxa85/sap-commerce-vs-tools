@@ -1,0 +1,17 @@
+{
+  "name": "@sapcommerce-vstools/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "UI-free core library: hAC client, platform model, type system index.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@sapcommerce-vstools/mock-hac": "workspace:*"
+  }
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<process xmlns="http://www.hybris.de/xsd/processdefinition" start="checkEligibility" name="badgeAwardProcess" processClass="com.acme.process.model.BadgeProcessModel" onError="failed">
+  <action id="checkEligibility" bean="checkEligibilityAction">
+    <transition name="OK" to="split"/>
+    <transition name="NOK" to="success"/>
+  </action>
+  <split id="split">
+    <targetNode name="awardBadge"/>
+    <targetNode name="notifyCustomer"/>
+  </split>
+  <action id="awardBadge" bean="awardBadgeAction">
+    <transition name="OK" to="join"/>
+  </action>
+  <action id="notifyCustomer" bean="notifyCustomerAction">
+    <transition name="OK" to="join"/>
+  </action>
+  <join id="join" then="waitForConfirmation"/>
+  <wait id="waitForConfirmation" then="success" prependProcessCode="true">
+    <event>BadgeConfirmed</event>
+  </wait>
+  <end id="success" state="SUCCEEDED">Badge process finished</end>
+  <end id="failed" state="FAILED">Badge process failed</end>
+</process>

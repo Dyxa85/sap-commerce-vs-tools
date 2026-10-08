@@ -1,0 +1,874 @@
+{
+  "name": "sap-commerce-vs-tools",
+  "displayName": "SAP Commerce VS-Tools",
+  "description": "Developer tools for SAP Commerce: hAC integration (FlexibleSearch, SQL, Groovy, ImpEx), language support and project navigation. Unofficial, not affiliated with SAP.",
+  "version": "0.1.0",
+  "publisher": "dyxa85",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dyxa85/sap-commerce-vs-tools.git"
+  },
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "sap commerce",
+    "sap commerce cloud",
+    "hybris",
+    "impex",
+    "flexiblesearch",
+    "hac"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.cjs",
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:impex",
+    "onLanguage:flexibleSearch",
+    "workspaceContains:**/bin/platform/extensions.xml"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Connections defined in workspace settings are ignored in untrusted workspaces so that no credentials can be sent to an unknown server.",
+      "restrictedConfigurations": [
+        "sapcommerce.connections",
+        "sapcommerce.mcp.enableQueries"
+      ]
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "sapcommerce.connection.add",
+        "title": "Add Connection…",
+        "category": "SAP Commerce",
+        "icon": "$(add)"
+      },
+      {
+        "command": "sapcommerce.connection.select",
+        "title": "Select Connection…",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.connection.edit",
+        "title": "Edit / Remove Connection…",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.connection.test",
+        "title": "Test Connection",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.connection.openHac",
+        "title": "Open hAC in Browser",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.flexsearch.run",
+        "title": "Run FlexibleSearch Query",
+        "category": "SAP Commerce",
+        "icon": "$(play)"
+      },
+      {
+        "command": "sapcommerce.sql.run",
+        "title": "Run SQL Query",
+        "category": "SAP Commerce",
+        "icon": "$(database)"
+      },
+      {
+        "command": "sapcommerce.groovy.run",
+        "title": "Run Groovy Script (Rollback)",
+        "category": "SAP Commerce",
+        "icon": "$(play)"
+      },
+      {
+        "command": "sapcommerce.groovy.runCommit",
+        "title": "Run Groovy Script (Commit)…",
+        "category": "SAP Commerce",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "sapcommerce.impex.validate",
+        "title": "Validate ImpEx",
+        "category": "SAP Commerce",
+        "icon": "$(check)"
+      },
+      {
+        "command": "sapcommerce.impex.import",
+        "title": "Import ImpEx…",
+        "category": "SAP Commerce",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "sapcommerce.pk.analyze",
+        "title": "Analyze PK",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.logger.set",
+        "title": "Change Log Level…",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.history.show",
+        "title": "Show History",
+        "category": "SAP Commerce",
+        "icon": "$(history)"
+      },
+      {
+        "command": "sapcommerce.history.clear",
+        "title": "Clear History",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.showLog",
+        "title": "Show Log",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.about",
+        "title": "About",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.project.refresh",
+        "title": "Refresh Project",
+        "category": "SAP Commerce",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sapcommerce.project.goToExtension",
+        "title": "Go to Extension…",
+        "category": "SAP Commerce",
+        "icon": "$(symbol-package)"
+      },
+      {
+        "command": "sapcommerce.project.openExtensionInfo",
+        "title": "Open extensioninfo.xml",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.project.copyName",
+        "title": "Copy Extension Name",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.project.revealInExplorer",
+        "title": "Reveal in Finder / File Explorer",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.project.showDependents",
+        "title": "Show Dependent Extensions…",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.project.toggleUnloaded",
+        "title": "Show / Hide Extensions That Are Not Loaded",
+        "category": "SAP Commerce",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "sapcommerce.types.search",
+        "title": "Go to Type, Attribute or Enum Value…",
+        "category": "SAP Commerce",
+        "icon": "$(search)"
+      },
+      {
+        "command": "sapcommerce.types.show",
+        "title": "Show Type",
+        "category": "SAP Commerce",
+        "icon": "$(symbol-class)"
+      },
+      {
+        "command": "sapcommerce.index.info",
+        "title": "Show Index Information",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.diagram.type",
+        "title": "Show Type Diagram",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.diagram.modules",
+        "title": "Show Extension Dependency Diagram",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.diagram.process",
+        "title": "Show Business Process Diagram",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.ant.run",
+        "title": "Run Ant Target…",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.ant.build",
+        "title": "Build (ant build)",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.ant.clean",
+        "title": "Clean (ant clean)",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.server.start",
+        "title": "Start Server",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.server.startDebug",
+        "title": "Start Server in Debug Mode",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.server.stop",
+        "title": "Stop Server",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.server.attachDebugger",
+        "title": "Attach Debugger to Server",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.java.configure",
+        "title": "Configure Java for this Project…",
+        "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.java.clear",
+        "title": "Remove Java Project Settings",
+        "category": "SAP Commerce"
+      }
+    ],
+    "configuration": {
+      "title": "SAP Commerce VS-Tools",
+      "properties": {
+        "sapcommerce.connections": {
+          "type": "array",
+          "scope": "window",
+          "default": [],
+          "markdownDescription": "hAC connections. Passwords are **not** stored here – they are kept in VS Code's secret storage. Use the command *SAP Commerce: Add Connection…*.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "url",
+              "username"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name, e.g. Local, Dev, Stage."
+              },
+              "url": {
+                "type": "string",
+                "description": "hAC base URL, e.g. https://localhost:9002/hac"
+              },
+              "username": {
+                "type": "string"
+              },
+              "ignoreTlsErrors": {
+                "type": "boolean",
+                "default": false,
+                "description": "Skip TLS certificate verification for this connection (self-signed certificates of local instances)."
+              },
+              "protected": {
+                "type": "boolean",
+                "default": false,
+                "description": "Ask for confirmation before commits, imports and log-level changes."
+              },
+              "locale": {
+                "type": "string",
+                "description": "Locale used for FlexibleSearch (default: sapcommerce.query.locale)."
+              },
+              "dataSource": {
+                "type": "string",
+                "description": "Data source id (default: master)."
+              }
+            }
+          }
+        },
+        "sapcommerce.query.maxCount": {
+          "type": "integer",
+          "default": 200,
+          "minimum": 1,
+          "maximum": 100000,
+          "scope": "window",
+          "description": "Maximum number of rows requested from the server for FlexibleSearch and SQL."
+        },
+        "sapcommerce.query.locale": {
+          "type": "string",
+          "default": "en",
+          "scope": "window",
+          "description": "Default locale for FlexibleSearch queries."
+        },
+        "sapcommerce.requestTimeoutSeconds": {
+          "type": "integer",
+          "default": 60,
+          "minimum": 5,
+          "maximum": 900,
+          "scope": "window",
+          "description": "Timeout for requests to the hAC."
+        },
+        "sapcommerce.confirmWrites": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Ask before running scripts in commit mode and before importing ImpEx (always asked on protected connections)."
+        },
+        "sapcommerce.impex.validation": {
+          "type": "string",
+          "enum": [
+            "IMPORT_STRICT",
+            "IMPORT_RELAXED"
+          ],
+          "default": "IMPORT_STRICT",
+          "scope": "window",
+          "description": "Validation mode used for ImpEx validation and import."
+        },
+        "sapcommerce.impex.legacyMode": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "Use the legacy (Jalo) import instead of the service layer."
+        },
+        "sapcommerce.impex.enableCodeExecution": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "Allow code execution (BeanShell/Groovy blocks) inside ImpEx scripts."
+        },
+        "sapcommerce.impex.maxThreads": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 64,
+          "scope": "window",
+          "description": "Number of import threads."
+        },
+        "sapcommerce.impex.encoding": {
+          "type": "string",
+          "default": "UTF-8",
+          "scope": "window",
+          "description": "Encoding sent with ImpEx requests."
+        },
+        "sapcommerce.impex.diagnostics.severity": {
+          "type": "object",
+          "scope": "resource",
+          "default": {},
+          "markdownDescription": "Override the severity of ImpEx diagnostics by code, or turn them off. Example: `{ \"impex.macro.unused\": \"off\", \"impex.modifier.unknown\": \"hint\" }`.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "hint",
+              "off"
+            ]
+          },
+          "propertyNames": {
+            "enum": [
+              "impex.syntax.unterminated-quote",
+              "impex.syntax.missing-bracket",
+              "impex.syntax.unexpected-text",
+              "impex.header.unknown-mode",
+              "impex.header.missing-type",
+              "impex.header.duplicate-column",
+              "impex.header.no-unique",
+              "impex.row.no-header",
+              "impex.row.extra-cells",
+              "impex.row.header-continuation",
+              "impex.value.trailing-comment",
+              "impex.modifier.unknown",
+              "impex.modifier.duplicate",
+              "impex.modifier.missing-value",
+              "impex.modifier.invalid-value",
+              "impex.macro.undefined",
+              "impex.macro.unused",
+              "impex.script.code-execution"
+            ]
+          }
+        },
+        "sapcommerce.impex.format.alignColumns": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Pad cells so the columns of a header and its rows line up. Whitespace around values is ignored by the importer."
+        },
+        "sapcommerce.impex.format.alignTypeColumn": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Indent value rows so their first column lines up under the header's 'MODE Type' part."
+        },
+        "sapcommerce.impex.format.trimTrailingWhitespace": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Remove trailing whitespace when formatting."
+        },
+        "sapcommerce.flexsearch.diagnostics.severity": {
+          "type": "object",
+          "scope": "resource",
+          "default": {},
+          "markdownDescription": "Override the severity of FlexibleSearch diagnostics by code, or turn them off. Example: `{ \"flexsearch.alias.unused\": \"off\" }`.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "hint",
+              "off"
+            ]
+          }
+        },
+        "sapcommerce.flexsearch.format.uppercaseKeywords": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Write FlexibleSearch keywords in upper case when formatting."
+        },
+        "sapcommerce.flexsearch.format.breakLogicalOperators": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Put AND / OR on their own indented line when formatting."
+        },
+        "sapcommerce.project.roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "window",
+          "markdownDescription": "Paths of `hybris` directories (the ones containing `bin` and `config`). Relative paths are resolved against the first workspace folder. Leave empty to detect them automatically."
+        },
+        "sapcommerce.project.showUnloadedExtensions": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "Also list extensions that are available on the scan paths but not loaded by localextensions.xml."
+        },
+        "sapcommerce.items.diagnostics.severity": {
+          "type": "object",
+          "scope": "resource",
+          "default": {},
+          "markdownDescription": "Override the severity of items.xml diagnostics by code, or turn them off. Example: `{ \"items.attribute.shadows\": \"off\" }`.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "hint",
+              "off"
+            ]
+          }
+        },
+        "sapcommerce.beans.diagnostics.severity": {
+          "type": "object",
+          "scope": "resource",
+          "default": {},
+          "markdownDescription": "Override the severity of beans.xml diagnostics by code, or turn them off.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "hint",
+              "off"
+            ]
+          }
+        },
+        "sapcommerce.spring.diagnostics.severity": {
+          "type": "object",
+          "scope": "resource",
+          "default": {},
+          "markdownDescription": "Override the severity of Spring XML diagnostics by code, or turn them off.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "hint",
+              "off"
+            ]
+          }
+        },
+        "sapcommerce.java.includeTests": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Include test sources (testsrc) when configuring the Java project."
+        },
+        "sapcommerce.java.excludeExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource",
+          "description": "Extensions that are left out when configuring the Java project."
+        },
+        "sapcommerce.java.maxExtensions": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "scope": "resource",
+          "description": "Upper limit of extensions for the Java project (0 = no limit). Lower it if the Java language server becomes slow."
+        },
+        "sapcommerce.mcp.enableQueries": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "markdownDescription": "Let the bundled MCP server run **read-only** FlexibleSearch/SQL queries against the active connection. VS Code asks for confirmation every time the server starts. Results are visible to the AI model."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "impex",
+        "aliases": [
+          "ImpEx",
+          "impex"
+        ],
+        "extensions": [
+          ".impex"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "flexibleSearch",
+        "aliases": [
+          "FlexibleSearch",
+          "FlexSearch"
+        ],
+        "extensions": [
+          ".fxs",
+          ".flexsearch",
+          ".flexibleSearch"
+        ],
+        "configuration": "./language-configuration-flexsearch.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "impex",
+        "scopeName": "source.impex",
+        "path": "./syntaxes/impex.tmLanguage.json"
+      },
+      {
+        "language": "flexibleSearch",
+        "scopeName": "source.flexsearch",
+        "path": "./syntaxes/flexsearch.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "impex",
+        "path": "./snippets/impex.json"
+      },
+      {
+        "language": "flexibleSearch",
+        "path": "./snippets/flexsearch.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[impex]": {
+        "editor.semanticHighlighting.enabled": true,
+        "editor.wordWrap": "off",
+        "editor.rulers": [],
+        "editor.tabSize": 2
+      },
+      "[flexibleSearch]": {
+        "editor.semanticHighlighting.enabled": true,
+        "editor.wordWrap": "on"
+      }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "sapcommerce.impex.validate",
+          "when": "resourceLangId == impex",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sapcommerce.impex.import",
+          "when": "resourceLangId == impex",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sapcommerce.flexsearch.run",
+          "when": "resourceLangId == flexibleSearch",
+          "group": "navigation@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "sapcommerce.impex.validate",
+          "when": "resourceLangId == impex",
+          "group": "sapcommerce@1"
+        },
+        {
+          "command": "sapcommerce.impex.import",
+          "when": "resourceLangId == impex",
+          "group": "sapcommerce@2"
+        },
+        {
+          "command": "sapcommerce.flexsearch.run",
+          "when": "resourceLangId == flexibleSearch",
+          "group": "sapcommerce@1"
+        },
+        {
+          "command": "sapcommerce.types.show",
+          "when": "resourceLangId == impex || resourceLangId == flexibleSearch || resourceFilename =~ /-items\\.xml$/",
+          "group": "sapcommerce@3"
+        },
+        {
+          "command": "sapcommerce.types.show",
+          "when": "resourceFilename =~ /-beans\\.xml$/",
+          "group": "sapcommerce@3"
+        },
+        {
+          "command": "sapcommerce.diagram.process",
+          "when": "resourceFilename =~ /-process\\.xml$/ || resourcePath =~ /[\\\\/]processes[\\\\/][^\\\\/]+\\.xml$/",
+          "group": "sapcommerce@4"
+        },
+        {
+          "command": "sapcommerce.diagram.type",
+          "when": "resourceFilename =~ /-items\\.xml$/",
+          "group": "sapcommerce@4"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "sapcommerce.project.goToExtension",
+          "when": "view == sapcommerce.project",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sapcommerce.project.toggleUnloaded",
+          "when": "view == sapcommerce.project",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sapcommerce.project.refresh",
+          "when": "view == sapcommerce.project",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sapcommerce.project.openExtensionInfo",
+          "when": "view == sapcommerce.project && viewItem == sapcommerce.extension",
+          "group": "1_open@1"
+        },
+        {
+          "command": "sapcommerce.project.showDependents",
+          "when": "view == sapcommerce.project && viewItem == sapcommerce.extension",
+          "group": "2_navigate@1"
+        },
+        {
+          "command": "sapcommerce.project.copyName",
+          "when": "view == sapcommerce.project && viewItem == sapcommerce.extension",
+          "group": "3_edit@1"
+        },
+        {
+          "command": "sapcommerce.project.revealInExplorer",
+          "when": "view == sapcommerce.project && viewItem == sapcommerce.extension",
+          "group": "3_edit@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sapcommerce.ant.run",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.ant.build",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.ant.clean",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.server.start",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.server.startDebug",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.server.stop",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.server.attachDebugger",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.java.configure",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.java.clear",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.diagram.modules",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.diagram.type",
+          "when": "sapcommerce.hasProject"
+        },
+        {
+          "command": "sapcommerce.diagram.process",
+          "when": "resourceFilename =~ /-process\\.xml$/ || resourcePath =~ /[\\\\/]processes[\\\\/][^\\\\/]+\\.xml$/"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "sapcommerce.flexsearch.run",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId == flexibleSearch"
+      },
+      {
+        "command": "sapcommerce.impex.validate",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v",
+        "when": "editorTextFocus && editorLangId == impex"
+      },
+      {
+        "command": "sapcommerce.types.search",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "sapcommerce.project",
+          "name": "Commerce Project",
+          "when": "sapcommerce.hasProject",
+          "icon": "$(server-environment)"
+        }
+      ]
+    },
+    "taskDefinitions": [
+      {
+        "type": "sapcommerce.ant",
+        "required": [
+          "target"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Ant target of the platform build, e.g. build or unittests."
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Extra arguments such as -Dtestclasses.extensions=acmecore."
+          },
+          "project": {
+            "type": "string",
+            "description": "The hybris directory when the workspace contains several projects."
+          }
+        }
+      },
+      {
+        "type": "sapcommerce.server",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "run",
+              "debug",
+              "minimal"
+            ],
+            "default": "run"
+          },
+          "project": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "sapcommerce-javac",
+        "label": "Java compiler errors reported by the platform build",
+        "owner": "sapcommerce-ant",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^\\s*\\[javac\\]\\s+(.+\\.java):(\\d+):\\s+(error|warning):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "severity": 3,
+          "message": 4
+        }
+      }
+    ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "sapcommerce.mcp",
+        "label": "SAP Commerce"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build:test": "node esbuild.test.mjs",
+    "test:host": "node esbuild.test.mjs && node esbuild.mjs && node dist-test/run.cjs",
+    "build:prod": "node esbuild.mjs --production",
+    "package": "node ../../tools/release/third-party-notices.mjs THIRD-PARTY-NOTICES.txt && node esbuild.mjs --production && vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "@sapcommerce-vstools/core": "workspace:*",
+    "vscode-languageclient": "10.1.2"
+  },
+  "devDependencies": {
+    "@sapcommerce-vstools/mock-hac": "workspace:*",
+    "@types/mocha": "10.0.10",
+    "@types/vscode": "1.101.0",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.0.0",
+    "mocha": "12.0.3",
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.3.2"
+  },
+  "icon": "images/icon.png",
+  "bugs": {
+    "url": "https://github.com/Dyxa85/sap-commerce-vs-tools/issues"
+  },
+  "homepage": "https://github.com/Dyxa85/sap-commerce-vs-tools#readme"
+}

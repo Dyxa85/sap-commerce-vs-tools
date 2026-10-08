@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 705 262" width="705" height="262" role="img" aria-label="Type diagram: Customer">
+<style>:root{--vscode-font-family:-apple-system,'Segoe UI',system-ui,sans-serif;--vscode-font-size:13px;--vscode-foreground:#cccccc;--vscode-editor-background:#1e1e1e;--vscode-editorWidget-background:#252526;--vscode-editorWidget-border:#5a5a5a;--vscode-focusBorder:#007fd4;--vscode-list-activeSelectionBackground:#094771;--vscode-list-activeSelectionForeground:#ffffff;--vscode-descriptionForeground:#9d9d9d;--vscode-charts-blue:#3794ff;--vscode-charts-orange:#d18616;--vscode-charts-purple:#b180d7;--vscode-charts-green:#89d185;--vscode-charts-red:#f14c4c;--vscode-charts-yellow:#cca700}
+
+
+
+.sub{color:var(--vscode-descriptionForeground)}
+
+
+
+
+
+svg text{font-family:var(--vscode-font-family);font-size:12px;fill:var(--vscode-foreground);pointer-events:none}
+.node rect{fill:var(--vscode-editorWidget-background);stroke:var(--vscode-editorWidget-border,#888);stroke-width:1.2}
+.node{cursor:pointer}.node:hover rect,.node:focus rect{stroke:var(--vscode-focusBorder);stroke-width:2}
+.node .detail{fill:var(--vscode-descriptionForeground);font-size:10.5px}
+.node-focus rect,.focus rect{fill:var(--vscode-list-activeSelectionBackground);stroke:var(--vscode-focusBorder);stroke-width:2}
+.node-focus text,.focus text{fill:var(--vscode-list-activeSelectionForeground)}
+.node-abstract rect{stroke-dasharray:5 3}
+.node-enum rect{stroke:var(--vscode-charts-purple)}.node-relation rect{stroke:var(--vscode-charts-orange)}
+.node-custom rect{stroke:var(--vscode-charts-blue);stroke-width:2}.node-platform rect{opacity:.75}
+.node-start rect{stroke:var(--vscode-charts-green);stroke-width:2.2}
+.node-end-succeeded rect{stroke:var(--vscode-charts-green);stroke-width:2.2}
+.node-end-failed rect,.node-end-error rect{stroke:var(--vscode-charts-red);stroke-width:2.2}
+.node-wait rect{stroke:var(--vscode-charts-yellow);stroke-width:1.8}
+.node-split rect,.node-join rect{stroke:var(--vscode-charts-blue);stroke-width:1.8}
+.node-scriptAction rect,.node-notify rect{stroke:var(--vscode-charts-purple);stroke-width:1.6}
+.edge path{fill:none;stroke:var(--vscode-descriptionForeground,#888);stroke-width:1.3;opacity:.85}
+.edge-reference path{stroke-dasharray:4 3;stroke:var(--vscode-charts-orange)}
+.edge.back path{stroke-dasharray:2 3;stroke:var(--vscode-charts-red)}
+.arrowhead{fill:var(--vscode-descriptionForeground,#888)}
+.edge-label{font-size:10.5px;fill:var(--vscode-descriptionForeground)}
+</style>
+<rect width="100%" height="100%" rx="8" fill="#1e1e1e"/>
+<text x="16" y="21" style="font-size:13px;font-weight:600;fill:#cccccc">Type diagram: Customer</text>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowhead"/></marker></defs><g transform="translate(0 30)">
+
+<g class="edge edge-extends"><path d="M 114 116 C 162.3 116, 162.3 116, 210.6 116" marker-end="url(#arrow)"/></g><g class="edge edge-extends"><path d="M 300.6 116 C 348.9 116, 348.9 116, 397.2 116" marker-end="url(#arrow)"/></g><g class="edge edge-extends"><path d="M 500.4 116 C 545.4 116, 545.4 116, 590.4 116" marker-end="url(#arrow)"/></g><g class="edge edge-reference"><path d="M 114 116 C 160.98000000000002 116, 160.98000000000002 46, 207.96 46" marker-end="url(#arrow)"/><text class="edge-label" x="160.98000000000002" y="77" text-anchor="middle">badges</text></g><g class="edge edge-reference"><path d="M 114 116 C 159 116, 159 186, 204 186" marker-end="url(#arrow)"/><text class="edge-label" x="159" y="147" text-anchor="middle">loyaltyTier</text></g><g class="node node-focus focus" data-id="Customer" tabindex="0" role="button"><title>Customer</title><rect x="24" y="94" width="90" height="44" rx="6"/><text class="label" x="69" y="120" text-anchor="middle">Customer</text></g><g class="node node-item" data-id="User" tabindex="0" role="button"><title>User</title><rect x="210.6" y="94" width="90" height="44" rx="6"/><text class="label" x="255.6" y="111" text-anchor="middle">User</text><text class="detail" x="255.6" y="127" text-anchor="middle">users</text></g><g class="node node-abstract" data-id="GenericItem" tabindex="0" role="button"><title>GenericItem</title><rect x="397.2" y="94" width="103.2" height="44" rx="6"/><text class="label" x="448.8" y="111" text-anchor="middle">GenericItem</text><text class="detail" x="448.8" y="127" text-anchor="middle">abstract</text></g><g class="node node-abstract" data-id="Item" tabindex="0" role="button"><title>Item</title><rect x="590.4" y="94" width="90" height="44" rx="6"/><text class="label" x="635.4" y="111" text-anchor="middle">Item</text><text class="detail" x="635.4" y="127" text-anchor="middle">abstract</text></g><g class="node node-item" data-id="AcmeBadge" tabindex="0" role="button"><title>AcmeBadge</title><rect x="207.96" y="24" width="95.28" height="44" rx="6"/><text class="label" x="255.60000000000002" y="41" text-anchor="middle">AcmeBadge</text><text class="detail" x="255.60000000000002" y="57" text-anchor="middle">acme_badges</text></g><g class="node node-enum" data-id="LoyaltyTier" tabindex="0" role="button"><title>LoyaltyTier</title><rect x="204" y="164" width="103.2" height="44" rx="6"/><text class="label" x="255.6" y="190" text-anchor="middle">LoyaltyTier</text></g></g></svg>

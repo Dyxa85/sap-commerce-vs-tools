@@ -1,0 +1,33 @@
+{
+  "Basic query": {
+    "prefix": "sel",
+    "body": [
+      "SELECT {${1:p}:pk}",
+      "FROM {${2:Product} AS ${1:p}}",
+      "WHERE {${1:p}:${3:code}} = ${4:?code}"
+    ],
+    "description": "SELECT … FROM … WHERE"
+  },
+  "Join": {
+    "prefix": "join",
+    "body": [
+      "{${1:Product} AS ${2:p} JOIN ${3:CatalogVersion} AS ${4:cv} ON {${2:p}:catalogVersion} = {${4:cv}:pk}}"
+    ],
+    "description": "FROM block with a join"
+  },
+  "Subselect": {
+    "prefix": "sub",
+    "body": ["{{", "  SELECT {${1:pk}} FROM {${2:Type}}", "}}"],
+    "description": "Subselect"
+  },
+  "Localized field": {
+    "prefix": "loc",
+    "body": "{${1:p}:${2:name}[${3:en}]}",
+    "description": "Localized attribute"
+  },
+  "Count": {
+    "prefix": "count",
+    "body": ["SELECT COUNT(*)", "FROM {${1:Type}}"],
+    "description": "Count items of a type"
+  }
+}

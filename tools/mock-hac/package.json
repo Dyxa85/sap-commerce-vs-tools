@@ -1,0 +1,15 @@
+{
+  "name": "@sapcommerce-vstools/mock-hac",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Deterministic mock of the SAP Commerce hAC (login flow, CSRF, sessions) for tests and demos.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types src/cli.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}

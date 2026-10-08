@@ -1,0 +1,14 @@
+**
+!dist/extension.cjs
+!dist/server.cjs
+!dist/mcp.cjs
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!language-configuration.json
+!syntaxes/**
+!snippets/**
+!images/**
+!language-configuration-flexsearch.json
+!THIRD-PARTY-NOTICES.txt

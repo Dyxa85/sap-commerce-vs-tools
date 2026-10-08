@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<items xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="items.xsd">
+  <itemtypes>
+    <itemtype code="Catalog" extends="GenericItem" autocreate="true" generate="true">
+      <deployment table="catalogs" typecode="600"/>
+      <attributes>
+        <attribute qualifier="id" type="java.lang.String">
+          <modifiers read="true" write="true" search="true" optional="false" unique="true"/>
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+    <itemtype code="CatalogVersion" extends="GenericItem" autocreate="true" generate="true">
+      <deployment table="catalogversions" typecode="601"/>
+      <attributes>
+        <attribute qualifier="version" type="java.lang.String">
+          <modifiers read="true" write="true" search="true" optional="false" unique="true"/>
+          <persistence type="property"/>
+        </attribute>
+        <attribute qualifier="catalog" type="Catalog">
+          <modifiers read="true" write="true" search="true" optional="false" unique="true"/>
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+    <itemtype code="Product" extends="GenericItem" autocreate="true" generate="true">
+      <deployment table="products" typecode="1"/>
+      <attributes>
+        <attribute qualifier="code" type="java.lang.String">
+          <modifiers read="true" write="true" search="true" optional="false" unique="true"/>
+          <persistence type="property"/>
+        </attribute>
+        <attribute qualifier="catalogVersion" type="CatalogVersion">
+          <modifiers read="true" write="true" search="true" optional="false" unique="true"/>
+          <persistence type="property"/>
+        </attribute>
+        <attribute qualifier="approvalStatus" type="ArticleApprovalStatus">
+          <modifiers read="true" write="true" search="true" optional="true"/>
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+  </itemtypes>
+</items>

@@ -1,0 +1,9 @@
+# Sample ImpEx written for this project
+$lang=en
+
+INSERT_UPDATE AcmeBadge;code[unique=true];name[lang=$lang]
+;gold-member;Gold Member
+;early-bird;Early Bird
+
+UPDATE Customer;uid[unique=true];loyaltyTier(code)
+;anonymous;BRONZE

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hybrisconfig>
+  <extensions>
+    <!-- fixture stand-in: extensions in platform/ext are always loaded -->
+    <path dir="${HYBRIS_BIN_DIR}"/>
+  </extensions>
+</hybrisconfig>

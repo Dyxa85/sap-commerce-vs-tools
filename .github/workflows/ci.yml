@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Extension host tests (Linux, headless)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm --filter sap-commerce-vs-tools run test:host
+      - name: Extension host tests
+        if: runner.os != 'Linux'
+        run: pnpm --filter sap-commerce-vs-tools run test:host
+      - name: Package VSIX
+        run: pnpm --filter sap-commerce-vs-tools exec vsce package --no-dependencies --allow-missing-repository
+      - name: Host tests against the minified bundle (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          pnpm --filter sap-commerce-vs-tools run build:prod
+          xvfb-run -a node packages/extension/dist-test/run.cjs

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extensioninfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <extension abstractclassprefix="Generated" name="acmecore" version="1.0">
+    <requires-extension name="core"/>
+    <coremodule generated="true" manager="com.acme.core.jalo.AcmeCoreManager" packageroot="com.acme.core"/>
+  </extension>
+</extensioninfo>

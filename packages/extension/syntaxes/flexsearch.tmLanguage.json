@@ -1,0 +1,83 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "FlexibleSearch",
+  "scopeName": "source.flexsearch",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#subselect" },
+    { "include": "#brace" },
+    { "include": "#string" },
+    { "include": "#parameter" },
+    { "include": "#number" },
+    { "include": "#keyword" },
+    { "include": "#function" },
+    { "include": "#operator" }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        { "begin": "/\\*", "end": "\\*/", "name": "comment.block.flexsearch" },
+        { "match": "--.*$", "name": "comment.line.double-dash.flexsearch" }
+      ]
+    },
+    "subselect": {
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "name": "meta.subselect.flexsearch",
+      "beginCaptures": { "0": { "name": "punctuation.definition.subselect.begin.flexsearch" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.subselect.end.flexsearch" } },
+      "patterns": [{ "include": "$self" }]
+    },
+    "brace": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "meta.brace.flexsearch",
+      "beginCaptures": { "0": { "name": "punctuation.definition.brace.begin.flexsearch" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.brace.end.flexsearch" } },
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#brace" },
+        { "include": "#string" },
+        { "include": "#parameter" },
+        {
+          "match": "(?i)\\b(AS|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|CROSS|ON)\\b",
+          "name": "keyword.control.join.flexsearch"
+        },
+        { "match": "\\[[^\\]]*\\]", "name": "constant.language.locale.flexsearch" },
+        {
+          "match": "(?<=[:.])\\s*[A-Za-z_$][\\w$]*",
+          "name": "variable.other.property.attribute.flexsearch"
+        },
+        { "match": "[A-Za-z_$][\\w$]*(?=\\s*[:.])", "name": "variable.other.alias.flexsearch" },
+        { "match": "[A-Za-z_$][\\w$]*", "name": "entity.name.type.item.flexsearch" },
+        { "match": "[:.!]", "name": "punctuation.separator.flexsearch" }
+      ]
+    },
+    "string": {
+      "patterns": [
+        { "match": "'(?:[^']|'')*'", "name": "string.quoted.single.flexsearch" },
+        { "match": "\"(?:[^\"]|\"\")*\"", "name": "string.quoted.double.flexsearch" }
+      ]
+    },
+    "parameter": {
+      "match": "\\?[A-Za-z_$][\\w$]*",
+      "name": "variable.parameter.query.flexsearch"
+    },
+    "number": {
+      "match": "\\b\\d+(?:\\.\\d+)?\\b",
+      "name": "constant.numeric.flexsearch"
+    },
+    "keyword": {
+      "match": "(?i)\\b(SELECT|DISTINCT|FROM|WHERE|AND|OR|NOT|IN|LIKE|BETWEEN|IS|NULL|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|CROSS|ON|AS|GROUP|BY|ORDER|HAVING|ASC|DESC|UNION|ALL|EXISTS|CASE|WHEN|THEN|ELSE|END|LIMIT|OFFSET|ESCAPE)\\b",
+      "name": "keyword.control.flexsearch"
+    },
+    "function": {
+      "match": "\\b[A-Za-z_][\\w]*(?=\\()",
+      "name": "support.function.flexsearch"
+    },
+    "operator": {
+      "match": "<>|<=|>=|!=|\\|\\||[=<>+\\-*/%]",
+      "name": "keyword.operator.flexsearch"
+    }
+  }
+}

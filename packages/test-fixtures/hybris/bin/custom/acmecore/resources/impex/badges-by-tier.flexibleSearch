@@ -1,0 +1,3 @@
+SELECT {b:pk}, {b:code}
+FROM {AcmeBadge AS b JOIN AcmeBadge2CustomerRelation AS r ON {r:source} = {b:pk}}
+WHERE {b:code} LIKE ?codePrefix

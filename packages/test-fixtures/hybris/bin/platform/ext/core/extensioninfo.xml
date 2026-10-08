@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extensioninfo>
+  <extension name="core" version="1.0">
+    <coremodule generated="true" manager="com.fixture.core.CoreManager" packageroot="com.fixture.core"/>
+  </extension>
+</extensioninfo>

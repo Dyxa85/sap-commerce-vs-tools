@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fixture: a small, original stand-in for the platform's base types. -->
+<items xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="items.xsd">
+  <atomictypes>
+    <atomictype class="java.lang.Object" autocreate="true" generate="false"/>
+    <atomictype class="java.lang.String" extends="java.lang.Object" autocreate="true" generate="false"/>
+    <atomictype class="java.lang.Boolean" extends="java.lang.Object" autocreate="true" generate="false"/>
+    <atomictype class="java.lang.Integer" extends="java.lang.Number" autocreate="true" generate="false"/>
+    <atomictype class="java.util.Date" extends="java.lang.Object" autocreate="true" generate="false"/>
+  </atomictypes>
+
+  <collectiontypes>
+    <collectiontype code="LanguageList" elementtype="Language" autocreate="true" generate="true" type="list"/>
+    <collectiontype code="StringSet" elementtype="java.lang.String" autocreate="true" generate="false" type="set"/>
+  </collectiontypes>
+
+  <maptypes>
+    <maptype code="LocalizedString" argumenttype="Language" returntype="java.lang.String" autocreate="true" generate="false"/>
+  </maptypes>
+
+  <enumtypes>
+    <enumtype code="ArticleApprovalStatus" autocreate="true" generate="true" dynamic="false">
+      <description>Approval state of an article</description>
+      <value code="check"/>
+      <value code="approved"/>
+      <value code="unapproved"/>
+    </enumtype>
+  </enumtypes>
+
+  <itemtypes>
+    <itemtype code="Item" abstract="true" autocreate="true" generate="false" jaloclass="com.fixture.core.Item">
+      <attributes>
+        <attribute qualifier="pk" type="java.lang.Object" autocreate="true">
+          <modifiers read="true" write="false" search="true" initial="false" optional="false"/>
+          <persistence type="property"/>
+        </attribute>
+        <attribute qualifier="creationtime" type="java.util.Date">
+          <modifiers read="true" write="false" search="true"/>
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+
+    <itemtype code="GenericItem" extends="Item" abstract="true" autocreate="true" generate="false"/>
+
+    <itemtype code="C2LItem" extends="GenericItem" abstract="true" autocreate="true" generate="false">
+      <attributes>
+        <attribute qualifier="isocode" type="java.lang.String">
+          <modifiers read="true" write="true" search="true" optional="false" unique="true"/>
+          <persistence type="property"/>
+        </attribute>
+        <attribute qualifier="active" type="java.lang.Boolean">
+          <modifiers read="true" write="true" search="true" optional="true"/>
+          <persistence type="property"/>
+          <defaultvalue>Boolean.TRUE</defaultvalue>
+        </attribute>
+      </attributes>
+    </itemtype>
+
+    <itemtype code="Language" extends="C2LItem" autocreate="true" generate="true">
+      <deployment table="languages" typecode="32"/>
+      <attributes>
+        <attribute qualifier="name" type="localized:java.lang.String">
+          <modifiers read="true" write="true" search="true" optional="true"/>
+          <persistence type="property"/>
+          <description>Display name of the language</description>
+        </attribute>
+        <attribute qualifier="fallbackLanguages" type="LanguageList">
+          <modifiers read="true" write="true" optional="true"/>
+          <persistence type="jalo"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+
+    <itemtype code="User" extends="GenericItem" autocreate="true" generate="true">
+      <deployment table="users" typecode="4"/>
+      <attributes>
+        <attribute qualifier="uid" type="java.lang.String">
+          <modifiers read="true" write="true" search="true" optional="false" unique="true"/>
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+
+    <itemtype code="Customer" extends="User" autocreate="true" generate="true">
+      <attributes>
+        <attribute qualifier="customerID" type="java.lang.String">
+          <modifiers read="true" write="true" search="true" optional="true"/>
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+  </itemtypes>
+</items>

@@ -1,0 +1,48 @@
+{
+  "INSERT_UPDATE header": {
+    "prefix": "iu",
+    "body": [
+      "INSERT_UPDATE ${1:Type};${2:code}[unique=true];${3:name}[lang=${4:en}]",
+      ";${5:value1};${6:value2}"
+    ],
+    "description": "INSERT_UPDATE header with one row"
+  },
+  "UPDATE header": {
+    "prefix": "up",
+    "body": ["UPDATE ${1:Type};${2:code}[unique=true];${3:attribute}", ";${4:key};${5:value}"],
+    "description": "UPDATE header with one row"
+  },
+  "REMOVE header": {
+    "prefix": "rm",
+    "body": ["REMOVE ${1:Type};${2:code}[unique=true]", ";${3:key}"],
+    "description": "REMOVE header with one row"
+  },
+  "Macro": {
+    "prefix": "macro",
+    "body": "\\$${1:name}=${2:value}",
+    "description": "Macro definition"
+  },
+  "Catalog version macros": {
+    "prefix": "catver",
+    "body": [
+      "\\$productCatalog=${1:myProductCatalog}",
+      "\\$catalogVersion=catalogVersion(catalog(id[default=\\$productCatalog]),version[default='${2:Staged}'])[unique=true,default=\\$productCatalog:${2:Staged}]"
+    ],
+    "description": "Macros for a catalog version column"
+  },
+  "Localized column": {
+    "prefix": "lang",
+    "body": "${1:name}[lang=${2:en}]",
+    "description": "Localized attribute column"
+  },
+  "Reference column": {
+    "prefix": "ref",
+    "body": "${1:attribute}(${2:code})",
+    "description": "Reference column using a lookup attribute"
+  },
+  "Script line": {
+    "prefix": "script",
+    "body": "#% ${1:impex.info(\"...\");}",
+    "description": "Code line (requires code execution)"
+  }
+}

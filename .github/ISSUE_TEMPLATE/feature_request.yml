@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+  - type: checkboxes
+    id: cleanroom
+    attributes:
+      label: Clean-room rule
+      options:
+        - label: I describe behaviour I observed or that is publicly documented. I am not pasting code or text from other plugins.
+          required: true

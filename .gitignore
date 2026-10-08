@@ -1,0 +1,17 @@
+node_modules/
+dist/
+out/
+*.vsix
+*.tsbuildinfo
+coverage/
+.vscode-test/
+.DS_Store
+.env
+.env.*
+!.env.example
+dist-test/
+
+packages/extension/THIRD-PARTY-NOTICES.txt
+*.vsix
+
+.demo/

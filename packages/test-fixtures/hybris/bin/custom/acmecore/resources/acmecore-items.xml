@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<items xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="items.xsd">
+  <enumtypes>
+    <enumtype code="LoyaltyTier" dynamic="false">
+      <value code="BRONZE"/>
+      <value code="SILVER"/>
+      <value code="GOLD"/>
+    </enumtype>
+  </enumtypes>
+  <relations>
+    <relation code="AcmeBadge2CustomerRelation" localized="false" generate="true" autocreate="true">
+      <sourceElement type="AcmeBadge" qualifier="badges" cardinality="many"/>
+      <targetElement type="Customer" qualifier="acmeCustomers" cardinality="many" collectiontype="set"/>
+    </relation>
+  </relations>
+  <itemtypes>
+    <itemtype code="AcmeBadge" autocreate="true" generate="true">
+      <deployment table="acme_badges" typecode="32001"/>
+      <attributes>
+        <attribute qualifier="code" type="java.lang.String">
+          <persistence type="property"/>
+          <modifiers optional="false" unique="true"/>
+        </attribute>
+        <attribute qualifier="name" type="localized:java.lang.String">
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+    <itemtype code="Customer" autocreate="false" generate="false">
+      <attributes>
+        <attribute qualifier="loyaltyTier" type="LoyaltyTier">
+          <persistence type="property"/>
+        </attribute>
+      </attributes>
+    </itemtype>
+  </itemtypes>
+</items>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="beans.xsd">
+  <bean class="com.acme.core.dto.BadgeData">
+    <description>A badge that can be awarded to a customer.</description>
+    <property name="code" type="java.lang.String"/>
+    <property name="name" type="java.lang.String"/>
+  </bean>
+
+  <bean class="com.acme.core.dto.BadgeSummaryData" extends="com.acme.core.dto.BadgeData">
+    <property name="customers" type="java.util.List&lt;com.acme.core.dto.CustomerRefData>"/>
+    <property name="tier" type="com.acme.core.enums.TierData"/>
+  </bean>
+
+  <bean class="com.acme.core.dto.CustomerRefData">
+    <property name="uid" type="String"/>
+  </bean>
+
+  <enum class="com.acme.core.enums.TierData">
+    <value>BRONZE</value>
+    <value>SILVER</value>
+  </enum>
+</beans>

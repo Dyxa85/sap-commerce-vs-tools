@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extensioninfo>
+  <extension name="catalog">
+    <requires-extension name="core"/>
+    <coremodule generated="true" packageroot="com.fixture.catalog"/>
+  </extension>
+</extensioninfo>

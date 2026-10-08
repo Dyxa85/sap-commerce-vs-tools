@@ -1,0 +1,51 @@
+name: Release
+
+# Push a tag like v1.0.0. The version in packages/extension/package.json must match the tag.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # step-level `if` cannot see step-level env, so the tokens are exposed at job level
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Extension host tests
+        run: xvfb-run -a pnpm --filter sap-commerce-vs-tools run test:host
+      - name: Tag matches the extension version
+        run: |
+          version=$(node -p "require('./packages/extension/package.json').version")
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != version $version"; exit 1; }
+      - name: Package VSIX (minified)
+        working-directory: packages/extension
+        run: pnpm run package
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: packages/extension/*.vsix
+          generate_release_notes: true
+      - name: Publish to the Visual Studio Marketplace
+        if: ${{ env.VSCE_PAT != '' }}
+        working-directory: packages/extension
+        run: npx vsce publish --no-dependencies --packagePath *.vsix
+      - name: Publish to Open VSX
+        if: ${{ env.OVSX_PAT != '' }}
+        working-directory: packages/extension
+        run: npx ovsx publish *.vsix -p "$OVSX_PAT"

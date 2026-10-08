@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extensioninfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <extension name="acmeprocess">
+    <requires-extension name="acmecore"/>
+    <requires-extension name="acmefacades"/>
+    <coremodule generated="false" packageroot="com.acme.process"/>
+  </extension>
+</extensioninfo>

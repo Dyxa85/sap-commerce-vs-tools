@@ -1,0 +1,16 @@
+{
+  "name": "@sapcommerce-vstools/dev-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Developer helpers: render the webview pages as plain HTML files to look at them in a browser.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "demo:diagrams": "esbuild src/diagram-demo.ts --bundle --platform=node --format=esm --outfile=../../.demo/diagram-demo.mjs --log-level=error && node ../../.demo/diagram-demo.mjs",
+    "demo:images": "esbuild src/diagram-images.ts --bundle --platform=node --format=esm --outfile=../../.demo/diagram-images.mjs --log-level=error && node ../../.demo/diagram-images.mjs"
+  },
+  "dependencies": {
+    "@sapcommerce-vstools/core": "workspace:*"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@sapcommerce-vstools/mcp-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MCP server that gives AI tools read-only knowledge of an SAP Commerce project (type system, beans, extension graph) and optional read-only FlexibleSearch/SQL.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@sapcommerce-vstools/core": "workspace:*",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@sapcommerce-vstools/mock-hac": "workspace:*"
+  }
+}

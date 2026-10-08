@@ -1,0 +1,111 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "ImpEx",
+  "scopeName": "source.impex",
+  "patterns": [
+    { "include": "#script" },
+    { "include": "#comment" },
+    { "include": "#userrights" },
+    { "include": "#macro-definition" },
+    { "include": "#header" },
+    { "include": "#row" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "^\\s*#(?!%).*$",
+      "name": "comment.line.number-sign.impex"
+    },
+    "script": {
+      "match": "^\\s*#%.*$",
+      "name": "meta.preprocessor.script.impex"
+    },
+    "userrights": {
+      "match": "(?i)^\\s*\\$(START|END)_USERRIGHTS\\b",
+      "name": "keyword.control.userrights.impex"
+    },
+    "macro-definition": {
+      "match": "^\\s*(\\$[A-Za-z_][\\w.-]*)\\s*(=)\\s*(.*?)\\s*$",
+      "captures": {
+        "1": { "name": "variable.other.macro.definition.impex" },
+        "2": { "name": "keyword.operator.assignment.impex" },
+        "3": {
+          "name": "meta.macro.value.impex",
+          "patterns": [{ "include": "#macro-use" }]
+        }
+      }
+    },
+    "macro-use": {
+      "match": "\\$[A-Za-z_][\\w.-]*",
+      "name": "variable.other.macro.impex"
+    },
+    "header": {
+      "begin": "(?i)^\\s*(INSERT_UPDATE|INSERT|UPDATE|REMOVE)\\b",
+      "beginCaptures": { "1": { "name": "keyword.control.mode.impex" } },
+      "end": "$",
+      "name": "meta.header.impex",
+      "patterns": [
+        {
+          "match": "(?<=INSERT_UPDATE|INSERT|UPDATE|REMOVE|insert_update|insert|update|remove)\\s+([^\\s;\\[(]+)",
+          "captures": { "1": { "name": "entity.name.type.item.impex" } }
+        },
+        { "include": "#modifiers" },
+        { "include": "#references" },
+        { "match": ";", "name": "punctuation.separator.column.impex" },
+        { "match": "[@&][\\w.-]+", "name": "variable.parameter.special-column.impex" },
+        { "include": "#macro-use" },
+        {
+          "match": "[A-Za-z_][\\w.-]*",
+          "name": "variable.other.property.attribute.impex"
+        }
+      ]
+    },
+    "modifiers": {
+      "begin": "\\[",
+      "end": "\\]",
+      "name": "meta.modifiers.impex",
+      "beginCaptures": { "0": { "name": "punctuation.definition.modifiers.begin.impex" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.modifiers.end.impex" } },
+      "patterns": [
+        { "match": "[\\w.-]+(?=\\s*=)", "name": "entity.other.attribute-name.modifier.impex" },
+        { "match": "=", "name": "keyword.operator.assignment.impex" },
+        { "match": "\\b(true|false)\\b", "name": "constant.language.boolean.impex" },
+        { "match": "'[^']*'", "name": "string.quoted.single.impex" },
+        { "include": "#macro-use" },
+        { "match": ",", "name": "punctuation.separator.modifier.impex" }
+      ]
+    },
+    "references": {
+      "begin": "\\(",
+      "end": "\\)",
+      "name": "meta.reference-pattern.impex",
+      "patterns": [
+        { "include": "#references" },
+        { "include": "#modifiers" },
+        { "include": "#macro-use" },
+        { "match": "[\\w.-]+", "name": "variable.parameter.reference.impex" },
+        { "match": ",", "name": "punctuation.separator.reference.impex" }
+      ]
+    },
+    "row": {
+      "begin": "(?=\\S|\\s*;)",
+      "end": "$",
+      "name": "meta.row.impex",
+      "patterns": [
+        { "include": "#string" },
+        { "match": ";", "name": "punctuation.separator.cell.impex" },
+        { "include": "#macro-use" },
+        { "match": "<(ignore|empty)>", "name": "constant.language.special.impex" },
+        { "match": "(?<![\\w.])[-+]?\\d+(?:[.,]\\d+)*(?![\\w.])", "name": "constant.numeric.impex" }
+      ]
+    },
+    "string": {
+      "begin": "\"",
+      "end": "\"(?!\")",
+      "name": "string.quoted.double.impex",
+      "patterns": [
+        { "match": "\"\"", "name": "constant.character.escape.quote.impex" },
+        { "include": "#macro-use" }
+      ]
+    }
+  }
+}
