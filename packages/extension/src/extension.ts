@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { PRODUCT_NAME, SUPPORTED_COMMERCE_VERSIONS } from '@sapcommerce-vstools/core';
 import { registerActions } from './commands/actions.js';
+import { registerCcv2View, type Ccv2Parts } from './ccv2/commands.js';
 import { CommerceTaskProvider } from './build/tasks.js';
 import { registerBuildCommands } from './commands/build.js';
 import { registerDiagramCommands } from './commands/diagrams.js';
@@ -30,6 +31,7 @@ export interface TestApi {
   diagramPanel: DiagramPanel;
   tasks: CommerceTaskProvider;
   mcp: McpProvider;
+  ccv2: Ccv2Parts;
   /** Time `activate` took (the language server and the project model start afterwards, in the background). */
   activationMs: number;
 }
@@ -47,6 +49,7 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
   context.subscriptions.push(log, manager, results, languages, project, typePanel, diagramPanel);
   const projectTree = registerProjectView(context, project);
   void project.refresh();
+  const ccv2 = registerCcv2View(context, log);
 
   registerConnectionCommands(context, manager, log);
   registerActions({ context, manager, results, history, log });
@@ -81,6 +84,7 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
         diagramPanel,
         tasks,
         mcp,
+        ccv2,
         activationMs,
       }
     : undefined;

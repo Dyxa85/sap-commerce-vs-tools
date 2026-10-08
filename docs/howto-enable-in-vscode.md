@@ -75,6 +75,10 @@ version appears. If the command is missing, reload the window (**Developer: Relo
    (relative to the first workspace folder, or absolute). **SAP Commerce: Show Index Information** reports how many
    extensions, item types and beans were indexed.
 
+If the folder is a **CCv2 repository** (it contains `core-customize/manifest.json`), a second view **CCv2** appears:
+the repository structure (`core-customize`, `js-storefront`, …) and an outline of `manifest.json` – click an entry to jump
+to it in the file. Platform and extensions stay in **Commerce Project**.
+
 The editor features (ImpEx, FlexibleSearch, items/beans/Spring/process XML, diagrams) now work – no connection required.
 
 ## 4. Connect to your hAC

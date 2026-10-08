@@ -5,6 +5,14 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **CCv2 view** in the Explorer (appears for a repository with `core-customize/manifest.json`): the repository as it is on
+  disk (`core-customize`, `js-storefront`, scripts, …), an outline of `manifest.json` (commerce suite and Solr version,
+  extension packs, extensions, properties, config files per persona, aspects with webapps, anything SAP adds later; a click
+  jumps to the entry; invalid JSON is reported), and under `hybris` only what a project owns (`config`, `bin/custom`).
+  It works on the files only, without a Cloud Portal connection.
+
 ### Changed
 
 - **Commerce Project view**: every extension now shows its real folder structure like an IDE (`gensrc`, `resources`, `src`,

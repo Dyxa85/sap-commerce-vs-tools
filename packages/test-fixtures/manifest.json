@@ -1,0 +1,9 @@
+{
+  "commerceSuiteVersion": "2211-jdk21.17",
+  "solrVersion": "9.10",
+  "extensionPacks": [{ "name": "hybris-commerce-integrations", "version": "2211-jdk21.11" }],
+  "extensions": ["acmecore", "acmefacades", "acmeprocess"],
+  "useConfig": { "properties": [{ "location": "/hybris/config/local_dev.properties", "persona": "development" }] },
+  "properties": [{ "key": "hac.webroot", "value": "/hac" }],
+  "aspects": [{ "name": "backoffice", "properties": [], "webapps": [{ "name": "hac", "contextPath": "/hac" }] }]
+}

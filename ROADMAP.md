@@ -16,7 +16,7 @@ developer, not by effort. Anything marked _needs …_ cannot be built honestly w
 
 ## Later
 
-- **CCv2**: builds, deployments, logs and environments via the Cloud Portal API; MCP tools for build status. _Needs a Cloud Portal API token to verify._
+- **CCv2 Cloud Portal**: builds, deployments, logs and environments via the Cloud Portal API; MCP tools for build status. _Needs a Cloud Portal API token to verify._ (The repository structure and `manifest.json` outline are done: the **CCv2** view.)
 - **Solr console**: run queries against the Solr cores configured for an instance. _Needs a Solr instance to verify._
 - **"Show model as table"** command for the Java debugger (VS Code has no custom value renderers).
 - **Polyglot Query**: only if a public syntax description or sample set becomes available.

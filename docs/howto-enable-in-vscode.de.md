@@ -71,6 +71,10 @@ der Zielversion. Fehlt der Befehl, das Fenster neu laden (**Developer: Reload Wi
    (relativ zum ersten Workspace-Ordner oder absolut). **SAP Commerce: Show Index Information** zeigt, wie viele Extensions,
    Item-Typen und Beans indiziert wurden.
 
+Ist der Ordner ein **CCv2-Repository** (enthält `core-customize/manifest.json`), erscheint zusätzlich die Ansicht **CCv2**:
+die Repository-Struktur (`core-customize`, `js-storefront`, …) und eine Gliederung der `manifest.json` – ein Klick springt
+zum Eintrag in der Datei. Platform und Extensions bleiben in **Commerce Project**.
+
 Die Editor-Funktionen (ImpEx, FlexibleSearch, items/beans/Spring/Prozess-XML, Diagramme) laufen jetzt – ohne Verbindung.
 
 ## 4. Mit der hAC verbinden

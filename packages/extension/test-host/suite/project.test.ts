@@ -1,5 +1,6 @@
 import * as assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import * as vscode from 'vscode';
 import type { Node } from '../../src/project/tree';
 import { getApi, stubWindow } from './helpers';
@@ -180,5 +181,73 @@ describe('MCP server', () => {
     const resolved = await api.mcp.resolveMcpServerDefinition(server!);
     assert.ok(resolved instanceof vscode.McpStdioServerDefinition);
     assert.ok(!resolved.args.includes('--hac-url'));
+  });
+});
+
+describe('CCv2 view', () => {
+  it('shows core-customize with an outline of manifest.json next to the real folders', async () => {
+    const api = await getApi();
+    await api.ccv2.service.refresh();
+    assert.equal(api.ccv2.service.roots.length, 1);
+    const tree = api.ccv2.tree;
+    const label = (n: unknown): string => String(tree.getTreeItem(n as never).label);
+
+    const roots = await tree.getChildren();
+    assert.equal(roots.length, 1);
+    const children = await tree.getChildren(roots[0]);
+    assert.deepEqual(
+      children.map((n) => `${n.kind}:${label(n)}`),
+      [
+        'manifest:manifest.json',
+        'hybris:hybris',
+        'dir:js-storefront',
+        'file:.aiignore',
+        'file:README.md',
+      ],
+    );
+
+    const outline = await tree.getChildren(children[0]);
+    assert.deepEqual(outline.slice(0, 2).map(label), ['commerceSuiteVersion', 'solrVersion']);
+    assert.equal(tree.getTreeItem(outline[0]!).description, '2211-jdk21.17');
+    const extensions = outline.find((n) => label(n) === 'extensions')!;
+    assert.deepEqual((await tree.getChildren(extensions)).map(label), [
+      'acmecore',
+      'acmefacades',
+      'acmeprocess',
+    ]);
+
+    // only what a project owns is listed under hybris
+    const hybris = await tree.getChildren(children[1]);
+    assert.deepEqual(hybris.map(label), ['config', 'bin/custom']);
+  });
+
+  it('opens manifest.json at the clicked entry', async () => {
+    const api = await getApi();
+    await api.ccv2.service.refresh();
+    const roots = await api.ccv2.tree.getChildren();
+    const core = await api.ccv2.tree.getChildren(roots[0]);
+    const outline = await api.ccv2.tree.getChildren(core[0]);
+    const solr = outline.find((n) => String(api.ccv2.tree.getTreeItem(n).label) === 'solrVersion')!;
+    const command = api.ccv2.tree.getTreeItem(solr).command!;
+    await vscode.commands.executeCommand(command.command, ...(command.arguments ?? []));
+    const editor = vscode.window.activeTextEditor!;
+    assert.ok(editor.document.fileName.endsWith('manifest.json'));
+    assert.match(editor.document.lineAt(editor.selection.active.line).text, /solrVersion/);
+  });
+
+  it('reports an invalid manifest.json instead of an empty view', async () => {
+    const api = await getApi();
+    const file = join(api.ccv2.service.roots[0]!.coreCustomize, 'manifest.json');
+    const original = readFileSync(file, 'utf8');
+    try {
+      writeFileSync(file, original.replace('"solrVersion": "9.10",', '"solrVersion": "9.10" ,,'));
+      const roots = await api.ccv2.tree.getChildren();
+      const core = await api.ccv2.tree.getChildren(roots[0]);
+      const outline = await api.ccv2.tree.getChildren(core[0]);
+      assert.equal(outline.length, 1);
+      assert.match(String(api.ccv2.tree.getTreeItem(outline[0]!).label), /^Invalid JSON/);
+    } finally {
+      writeFileSync(file, original);
+    }
   });
 });

@@ -9,6 +9,7 @@ export * from './typesystem/index.js';
 export * as beans from './beans/index.js';
 export * as spring from './spring/index.js';
 export * as graph from './graph/index.js';
+export * as ccv2 from './ccv2/index.js';
 export * as processes from './processes/index.js';
 export * from './build/index.js';
 export * from './java/index.js';

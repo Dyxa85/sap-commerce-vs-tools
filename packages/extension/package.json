@@ -254,6 +254,17 @@
         "command": "sapcommerce.java.clear",
         "title": "Remove Java Project Settings",
         "category": "SAP Commerce"
+      },
+      {
+        "command": "sapcommerce.ccv2.refresh",
+        "title": "Refresh CCv2 View",
+        "category": "SAP Commerce",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sapcommerce.ccv2.reveal",
+        "title": "Show Entry in manifest.json",
+        "category": "SAP Commerce"
       }
     ],
     "configuration": {
@@ -694,6 +705,11 @@
           "command": "sapcommerce.project.refresh",
           "when": "view == sapcommerce.project",
           "group": "navigation@3"
+        },
+        {
+          "command": "sapcommerce.ccv2.refresh",
+          "when": "view == sapcommerce.ccv2",
+          "group": "navigation@1"
         }
       ],
       "view/item/context": [
@@ -714,7 +730,7 @@
         },
         {
           "command": "sapcommerce.project.revealInExplorer",
-          "when": "view == sapcommerce.project && (viewItem == sapcommerce.extension || viewItem == sapcommerce.file || viewItem == sapcommerce.folder)",
+          "when": "(view == sapcommerce.project && (viewItem == sapcommerce.extension || viewItem == sapcommerce.file || viewItem == sapcommerce.folder)) || (view == sapcommerce.ccv2 && (viewItem == sapcommerce.file || viewItem == sapcommerce.folder))",
           "group": "3_edit@2"
         }
       ],
@@ -766,6 +782,14 @@
         {
           "command": "sapcommerce.diagram.process",
           "when": "resourceFilename =~ /-process\\.xml$/ || resourcePath =~ /[\\\\/]processes[\\\\/][^\\\\/]+\\.xml$/"
+        },
+        {
+          "command": "sapcommerce.ccv2.reveal",
+          "when": "false"
+        },
+        {
+          "command": "sapcommerce.ccv2.refresh",
+          "when": "sapcommerce.hasCcv2"
         }
       ]
     },
@@ -795,6 +819,12 @@
           "name": "Commerce Project",
           "when": "sapcommerce.hasProject",
           "icon": "$(server-environment)"
+        },
+        {
+          "id": "sapcommerce.ccv2",
+          "name": "CCv2",
+          "when": "sapcommerce.hasCcv2",
+          "icon": "$(cloud)"
         }
       ]
     },

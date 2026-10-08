@@ -195,15 +195,8 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
         item.iconPath = new vscode.ThemeIcon(FILE_GROUP_ICONS[node.fileKind]);
         return item;
       }
-      case 'dir': {
-        // the file icon theme draws the folder; well-known folders get a short description
-        const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Collapsed);
-        item.resourceUri = vscode.Uri.file(node.path);
-        item.description = roleOf(node.root, node.path);
-        item.tooltip = node.path;
-        item.contextValue = 'sapcommerce.folder';
-        return item;
-      }
+      case 'dir':
+        return folderItem(node.path, node.label, node.root);
       case 'overview': {
         const item = new vscode.TreeItem(
           'Commerce overview',
@@ -213,20 +206,8 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
         item.iconPath = new vscode.ThemeIcon('list-tree');
         return item;
       }
-      case 'file': {
-        const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.None);
-        item.resourceUri = vscode.Uri.file(node.path);
-        // jars and classes cannot be shown in an editor
-        if (!/\.(jar|class|zip|gz|war|ear)$/i.test(node.path)) {
-          item.command = {
-            command: 'vscode.open',
-            title: 'Open',
-            arguments: [vscode.Uri.file(node.path)],
-          };
-        }
-        item.contextValue = 'sapcommerce.file';
-        return item;
-      }
+      case 'file':
+        return fileItem(node.path, node.label);
       case 'requires': {
         const item = new vscode.TreeItem('Requires', vscode.TreeItemCollapsibleState.Collapsed);
         item.description = String(node.info.requires.length);
@@ -366,4 +347,25 @@ async function configFiles(project: PlatformProject): Promise<Node[]> {
 
 function projectLabel(project: PlatformProject): string {
   return `${basename(dirname(project.hybrisDir))}/${basename(project.hybrisDir)}`;
+}
+
+/** A folder of an extension; the file icon theme draws it, well-known folders get a short description. */
+export function folderItem(path: string, label: string, root: string): vscode.TreeItem {
+  const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed);
+  item.resourceUri = vscode.Uri.file(path);
+  item.description = roleOf(root, path);
+  item.tooltip = path;
+  item.contextValue = 'sapcommerce.folder';
+  return item;
+}
+
+export function fileItem(path: string, label: string): vscode.TreeItem {
+  const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+  item.resourceUri = vscode.Uri.file(path);
+  // jars and classes cannot be shown in an editor
+  if (!/\.(jar|class|zip|gz|war|ear)$/i.test(path)) {
+    item.command = { command: 'vscode.open', title: 'Open', arguments: [vscode.Uri.file(path)] };
+  }
+  item.contextValue = 'sapcommerce.file';
+  return item;
 }
