@@ -5,6 +5,14 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Commerce Project view**: every extension now shows its real folder structure like an IDE (`gensrc`, `resources`, `src`,
+  `testsrc`, `build.xml`, `extensioninfo.xml`, …) including the Java sources, with Java packages merged
+  (`com/acme/core/service`) and source folders labelled. The former type system / beans / Spring / process / ImpEx
+  groups and the dependencies moved into a _Commerce overview_ node below. Build output (`classes`, `eclipsebin`, `bin`)
+  is hidden; see `sapcommerce.project.hiddenEntries`. New files appear without a manual refresh.
+
 ## [0.1.0] - 2026-10-08
 
 First release candidate.

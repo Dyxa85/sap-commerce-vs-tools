@@ -46,9 +46,26 @@ describe('project model and Commerce Project view', () => {
     );
 
     const acmecore = (await api.projectTree.getChildren(custom)) as Node[];
-    const fileGroups = (await api.projectTree.getChildren(acmecore[0])) as Node[];
-    const labels = fileGroups.map((n) => String(api.projectTree.getTreeItem(n).label));
-    assert.ok(labels.includes('extensioninfo.xml'));
+    const content = (await api.projectTree.getChildren(acmecore[0])) as Node[];
+    const label = (n: Node): string => String(api.projectTree.getTreeItem(n).label);
+    const describe = (n: Node): unknown => api.projectTree.getTreeItem(n).description;
+
+    // the real folder structure of the extension, folders first, then files
+    assert.deepEqual(content.filter((n) => n.kind === 'dir').map(label), ['resources', 'src']);
+    assert.ok(content.some((n) => n.kind === 'file' && label(n) === 'extensioninfo.xml'));
+    const src = content.find((n) => n.kind === 'dir' && label(n) === 'src')!;
+    assert.equal(describe(src), 'sources');
+
+    // Java packages are merged until something branches, down to the class
+    const packages = (await api.projectTree.getChildren(src)) as Node[];
+    assert.equal(packages.length, 1);
+    assert.equal(label(packages[0]!), 'com/acme/core/service/impl');
+    const classes = (await api.projectTree.getChildren(packages[0])) as Node[];
+    assert.deepEqual(classes.map(label), ['DefaultAcmeBadgeService.java']);
+
+    // the commerce-specific view stays available below
+    const overview = content.find((n) => n.kind === 'overview')!;
+    const labels = ((await api.projectTree.getChildren(overview)) as Node[]).map(label);
     assert.ok(labels.includes('Type system (items.xml)'));
     assert.ok(labels.includes('ImpEx'));
   });

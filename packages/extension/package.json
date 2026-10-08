@@ -543,6 +543,24 @@
           "default": false,
           "scope": "machine",
           "markdownDescription": "Let the bundled MCP server run **read-only** FlexibleSearch/SQL queries against the active connection. VS Code asks for confirmation every time the server starts. Results are visible to the AI model."
+        },
+        "sapcommerce.project.hiddenEntries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".git",
+            ".idea",
+            ".settings",
+            "node_modules",
+            "classes",
+            "eclipsebin",
+            ".DS_Store",
+            "/bin"
+          ],
+          "scope": "resource",
+          "markdownDescription": "Files and folders that the *Commerce Project* view does not show inside extensions. A plain name (`classes`) hides it at any depth, a leading slash (`/bin`) only the top-level entry of an extension."
         }
       }
     },
@@ -696,7 +714,7 @@
         },
         {
           "command": "sapcommerce.project.revealInExplorer",
-          "when": "view == sapcommerce.project && viewItem == sapcommerce.extension",
+          "when": "view == sapcommerce.project && (viewItem == sapcommerce.extension || viewItem == sapcommerce.file || viewItem == sapcommerce.folder)",
           "group": "3_edit@2"
         }
       ],

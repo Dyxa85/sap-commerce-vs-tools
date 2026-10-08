@@ -9,6 +9,7 @@ import {
   type FileKind,
   type PlatformProject,
 } from '@sapcommerce-vstools/core';
+import { listFolder, parseHidden, roleOf } from './folders.js';
 import type { ProjectService } from './service.js';
 
 export type Node =
@@ -22,6 +23,8 @@ export type Node =
     }
   | { kind: 'extension'; project: PlatformProject; info: ExtensionInfo }
   | { kind: 'fileGroup'; info: ExtensionInfo; fileKind: FileKind; files: ExtensionFile[] }
+  | { kind: 'dir'; path: string; label: string; root: string }
+  | { kind: 'overview'; project: PlatformProject; info: ExtensionInfo }
   | { kind: 'file'; path: string; label: string }
   | { kind: 'requires'; project: PlatformProject; info: ExtensionInfo };
 
@@ -56,19 +59,65 @@ const FILE_GROUP_ICONS: Record<FileKind, string> = {
   other: 'file',
 };
 
+/** Build output and tool folders that only clutter the tree. `/bin` is the top-level folder holding built jars. */
+export const DEFAULT_HIDDEN = [
+  '.git',
+  '.idea',
+  '.settings',
+  'node_modules',
+  'classes',
+  'eclipsebin',
+  '.DS_Store',
+  '/bin',
+];
+
 export class ProjectTree implements vscode.TreeDataProvider<Node> {
   private readonly emitter = new vscode.EventEmitter<Node | undefined>();
   readonly onDidChangeTreeData = this.emitter.event;
   private readonly subscription: vscode.Disposable;
 
+  private watchers: vscode.Disposable[] = [];
+  private timer: NodeJS.Timeout | undefined;
+
   constructor(private readonly service: ProjectService) {
-    this.subscription = service.onDidChange(() => this.emitter.fire(undefined));
+    this.subscription = service.onDidChange(() => {
+      this.emitter.fire(undefined);
+      this.watch();
+    });
+    this.watch();
+  }
+
+  /** New and deleted files change what the folder tree shows (edits do not), so only those are watched. */
+  private watch(): void {
+    for (const w of this.watchers) w.dispose();
+    this.watchers = [];
+    const refresh = (): void => {
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.emitter.fire(undefined), 500);
+    };
+    for (const project of this.service.projects) {
+      const watcher = vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(project.hybrisDir, '**'),
+        false,
+        true,
+        false,
+      );
+      this.watchers.push(watcher, watcher.onDidCreate(refresh), watcher.onDidDelete(refresh));
+    }
   }
 
   private showUnloaded(): boolean {
     return vscode.workspace
       .getConfiguration('sapcommerce.project')
       .get<boolean>('showUnloadedExtensions', false);
+  }
+
+  private hiddenRules() {
+    return parseHidden(
+      vscode.workspace
+        .getConfiguration('sapcommerce.project')
+        .get<string[]>('hiddenEntries', DEFAULT_HIDDEN),
+    );
   }
 
   /** Extensions of one project that are shown (loaded ones, or all when configured). */
@@ -146,14 +195,35 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
         item.iconPath = new vscode.ThemeIcon(FILE_GROUP_ICONS[node.fileKind]);
         return item;
       }
+      case 'dir': {
+        // the file icon theme draws the folder; well-known folders get a short description
+        const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Collapsed);
+        item.resourceUri = vscode.Uri.file(node.path);
+        item.description = roleOf(node.root, node.path);
+        item.tooltip = node.path;
+        item.contextValue = 'sapcommerce.folder';
+        return item;
+      }
+      case 'overview': {
+        const item = new vscode.TreeItem(
+          'Commerce overview',
+          vscode.TreeItemCollapsibleState.Collapsed,
+        );
+        item.description = 'type system, beans, Spring, processes, ImpEx, dependencies';
+        item.iconPath = new vscode.ThemeIcon('list-tree');
+        return item;
+      }
       case 'file': {
         const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.None);
         item.resourceUri = vscode.Uri.file(node.path);
-        item.command = {
-          command: 'vscode.open',
-          title: 'Open',
-          arguments: [vscode.Uri.file(node.path)],
-        };
+        // jars and classes cannot be shown in an editor
+        if (!/\.(jar|class|zip|gz|war|ear)$/i.test(node.path)) {
+          item.command = {
+            command: 'vscode.open',
+            title: 'Open',
+            arguments: [vscode.Uri.file(node.path)],
+          };
+        }
         item.contextValue = 'sapcommerce.file';
         return item;
       }
@@ -192,6 +262,26 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
           info,
         }));
       case 'extension': {
+        // the real folder structure first, as in an IDE; the commerce-specific views sit below it
+        const entries = await listFolder(node.info.dir, node.info.dir, this.hiddenRules());
+        return [
+          ...entries.map((e) =>
+            e.isDir
+              ? { kind: 'dir' as const, path: e.path, label: e.label, root: node.info.dir }
+              : { kind: 'file' as const, path: e.path, label: e.label },
+          ),
+          { kind: 'overview' as const, project: node.project, info: node.info },
+        ];
+      }
+      case 'dir': {
+        const entries = await listFolder(node.path, node.root, this.hiddenRules());
+        return entries.map((e) =>
+          e.isDir
+            ? { kind: 'dir' as const, path: e.path, label: e.label, root: node.root }
+            : { kind: 'file' as const, path: e.path, label: e.label },
+        );
+      }
+      case 'overview': {
         const files = await listExtensionFiles(node.info);
         const kinds: FileKind[] = [
           'items',
@@ -202,12 +292,7 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
           'impex',
           'flexsearch',
         ];
-        const children: Node[] = [
-          { kind: 'file', path: node.info.infoFile, label: 'extensioninfo.xml' },
-          ...files
-            .filter((f) => f.kind === 'properties' && f.relativePath === 'project.properties')
-            .map((f) => ({ kind: 'file' as const, path: f.path, label: 'project.properties' })),
-        ];
+        const children: Node[] = [];
         for (const fileKind of kinds) {
           const list = files.filter((f) => f.kind === fileKind);
           if (list.length > 0)
@@ -250,6 +335,8 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
   }
 
   dispose(): void {
+    if (this.timer) clearTimeout(this.timer);
+    for (const w of this.watchers) w.dispose();
     this.subscription.dispose();
     this.emitter.dispose();
   }

@@ -59,8 +59,8 @@ export function registerProjectView(
   });
 
   register('sapcommerce.project.revealInExplorer', async (node: Node) => {
-    const info = extensionOf(node);
-    if (info) await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(info.dir));
+    const path = node?.kind === 'file' || node?.kind === 'dir' ? node.path : extensionOf(node)?.dir;
+    if (path) await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path));
   });
 
   register('sapcommerce.project.showDependents', async (node: Node) => {

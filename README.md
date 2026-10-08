@@ -35,7 +35,7 @@ Step by step: installing, connecting, first steps, all settings, building from s
 
 - **ImpEx and FlexibleSearch editors** whose diagnostics mirror what the importer and the hAC really do (measured on a real instance, see [docs/impex-behaviour.md](docs/impex-behaviour.md)): unknown types and attributes with suggestions, macros, missing unique columns, `--` comments and trailing `;` that break the hAC, completion, hover, formatter, quick fixes.
 - **Project knowledge** from your `items.xml`, `beans.xml`, Spring and business process files: go to definition across extensions and into Java sources, completion for types, attributes, enum values and bean ids, override and alias awareness.
-- **Commerce Project view** in the Explorer: extensions in load order, their files, dependencies and dependents; problems in `localextensions.xml`.
+- **Commerce Project view** in the Explorer: extensions in load order with their real folder structure (sources, resources, build files – like in an IDE), a commerce overview (type system, beans, Spring, processes, dependencies and dependents); problems in `localextensions.xml`.
 - **Type and bean preview** and **Go to Type, Attribute or Enum Value…**
 
 ### See it
