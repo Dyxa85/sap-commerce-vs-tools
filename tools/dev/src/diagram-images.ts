@@ -54,7 +54,7 @@ const t = typeGraph(types, 'Customer');
 if (t) {
   write(
     'diagram-type',
-    graph.renderSvg(graph.layoutGraph(t.nodes, t.edges), { focus: t.focus }),
+    graph.renderSvg(graph.layoutGraph(t.nodes, t.edges, { direction: 'TB' }), { focus: t.focus }),
     'Type diagram: Customer',
   );
 }
@@ -74,7 +74,7 @@ if (def) {
   const p = processes.processGraph(def);
   write(
     'diagram-process',
-    graph.renderSvg(graph.layoutGraph(p.nodes, p.edges), { focus: def.start }),
+    graph.renderSvg(graph.layoutGraph(p.nodes, p.edges, { direction: 'TB' }), { focus: def.start }),
     'Business process: badgeAwardProcess',
   );
 }
