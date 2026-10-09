@@ -48,6 +48,7 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
   const started = performance.now();
   const log = new Logger();
   const manager = new ConnectionManager(context, log);
+  if (context.extensionMode === vscode.ExtensionMode.Test) manager.trace = [];
   const results = new ResultsPanel();
   const history = new History(context.workspaceState);
   const languages = new LanguageServerController(context, log);

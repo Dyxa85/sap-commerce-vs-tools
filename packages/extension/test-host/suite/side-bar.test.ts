@@ -104,7 +104,8 @@ describe('connections page', () => {
     } finally {
       restore();
     }
-    assert.equal(results(api.connectionsPanel.sentMessages).at(-1)!.ok, false);
+    const last = results(api.connectionsPanel.sentMessages).at(-1)!;
+    assert.equal(last.ok, false, `${last.message}\n${api.manager.trace?.join('\n')}`);
   });
 
   it('forgets the password when url or user change, and renames without losing the connection', async () => {

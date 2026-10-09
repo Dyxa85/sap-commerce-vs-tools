@@ -97,7 +97,14 @@ export class ConnectionsPanel implements vscode.Disposable {
           if (connection) await this.manager.setActive(connection.id);
           return;
         case 'test': {
-          if (!connection) return;
+          if (!connection) {
+            this.post({
+              type: 'result',
+              ok: false,
+              message: 'That connection is not known any more. Save it first.',
+            });
+            return;
+          }
           const result = await checkConnection(this.manager, connection, this.log);
           if (!result.cancelled)
             this.post({ type: 'result', ok: result.ok, message: result.message });

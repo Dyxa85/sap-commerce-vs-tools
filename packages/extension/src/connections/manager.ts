@@ -136,6 +136,9 @@ export class ConnectionManager implements vscode.Disposable {
   }
 
   async storePassword(connection: ConnectionConfig, password: string): Promise<void> {
+    this.note(
+      `${connection.id}: store password #${createHash('sha256').update(password).digest('hex').slice(0, 6)}`,
+    );
     this.bump(connection.id); // logins that are already running used the old password
     await this.context.secrets.store(ConnectionManager.secretKey(connection), password);
     this.log.addSecret(password);
@@ -161,7 +164,10 @@ export class ConnectionManager implements vscode.Disposable {
     const fingerprint = this.fingerprint(connection);
     const generation = this.generations.get(connection.id) ?? 0;
     const cached = this.clients.get(connection.id);
-    if (cached?.fingerprint === fingerprint) return cached.client;
+    if (cached?.fingerprint === fingerprint) {
+      this.note(`${connection.id}: cached client`);
+      return cached.client;
+    }
     cached?.client.dispose();
     this.clients.delete(connection.id);
 
@@ -195,6 +201,9 @@ export class ConnectionManager implements vscode.Disposable {
         fromStore = false;
       }
       this.log.addSecret(password);
+      this.note(
+        `${connection.id}: login with ${fromStore ? 'stored' : 'typed'} password #${createHash('sha256').update(password).digest('hex').slice(0, 6)}`,
+      );
 
       const client = new HacClient({
         baseUrl: connection.url,
@@ -241,6 +250,15 @@ export class ConnectionManager implements vscode.Disposable {
   /** True while an authenticated client is cached for the connection (used by tests). */
   hasCachedClient(id: string): boolean {
     return this.clients.has(id);
+  }
+
+  /** Test-only trace of how clients were obtained (`undefined` outside tests). It holds no password, only a short hash. */
+  trace: string[] | undefined;
+
+  private note(message: string): void {
+    if (!this.trace) return;
+    this.trace.push(`${new Date().toISOString().slice(14, 23)} ${message}`);
+    if (this.trace.length > 40) this.trace.shift();
   }
 
   private bump(id: string): void {
