@@ -2,6 +2,8 @@
 
 Developer tools for **SAP Commerce** in VS Code. Talk to the hybris Administration Console (hAC) without leaving the editor.
 
+![VS Code with the SAP Commerce side bar, an ImpEx file validated on the instance and the extension log](https://raw.githubusercontent.com/Dyxa85/sap-commerce-vs-tools/main/docs/images/screenshot-overview.png)
+
 > **Unofficial.** Not affiliated with, endorsed by or sponsored by SAP SE. "SAP" and "SAP Commerce" are trademarks of SAP SE,
 > used here only to describe compatibility. Tested against SAP Commerce **2211-jdk21**.
 
@@ -19,14 +21,6 @@ Developer tools for **SAP Commerce** in VS Code. Talk to the hybris Administrati
 - **PK analyzer**, **log-level changes**, and a **history** of your queries and scripts.
 - **Several connections** (Local, Dev, Stage …) with a status bar switcher. Mark production-like systems as _protected_.
 
-## Where to find things
-
-Click the **SAP Commerce** icon (a hexagon with `< >`) in the activity bar: **Connections**, **Features** (a clickable table
-of contents of everything the extension does), **Commerce Project** and **CCv2**. In the editor you get language support,
-title-bar buttons, the right-click menu and the shortcuts `Cmd/Ctrl+Enter` (run query), `Cmd/Ctrl+Alt+V` (validate ImpEx)
-and `Cmd/Ctrl+Alt+T` (search types). Everything is also in the Command Palette under `SAP Commerce`. A guided tour is under
-**Welcome → Walkthroughs**.
-
 ## What is the hAC connection for?
 
 The hAC (hybris Administration Console) is the web console of a **running** instance. With a connection you can run
@@ -34,6 +28,9 @@ FlexibleSearch, SQL and Groovy, validate and import ImpEx, use the PK analyzer a
 editors, project views, diagrams, build commands and AI project tools still work.
 
 ## Getting started
+
+Click the **SAP Commerce** icon (a hexagon with `< >`) in the activity bar. A guided tour is under **Welcome → Walkthroughs**; the
+**Features** view lists everything the extension can do and where to find it.
 
 1. Open the folder that contains your `hybris` directory.
 2. Side bar → **Connections** → **+** (or **SAP Commerce: Open Connection Settings**): hAC address (e.g.

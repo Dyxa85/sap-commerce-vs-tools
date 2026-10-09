@@ -1125,5 +1125,9 @@
   "bugs": {
     "url": "https://github.com/Dyxa85/sap-commerce-vs-tools/issues"
   },
-  "homepage": "https://github.com/Dyxa85/sap-commerce-vs-tools#readme"
+  "homepage": "https://github.com/Dyxa85/sap-commerce-vs-tools#readme",
+  "galleryBanner": {
+    "color": "#0e4a6e",
+    "theme": "dark"
+  }
 }
