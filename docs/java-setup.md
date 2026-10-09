@@ -41,12 +41,46 @@ Settings: `sapcommerce.java.includeTests`, `sapcommerce.java.excludeExtensions`,
 Generated model classes (`bootstrap/gensrc`, extension `gensrc`) exist only after `ant build`; until then references to
 `*Model` classes are unresolved in the editor.
 
-### Not verified
+### What to expect
 
-The settings are generated and unit-tested, but they were **not** exercised against a running Red Hat Java language
-server (it was not installed on the development machine). Import time, memory use and go-to-definition across the
-platform are therefore unmeasured; ADR 0001 stays _Proposed_ until that is done. If the single flat project turns out
-too heavy, lower `sapcommerce.java.maxExtensions` or exclude extensions you do not work on.
+1. Run **SAP Commerce: Configure Java for this Project…** (or answer the offer that appears once when a project is found
+   and the Java extension is installed). The settings go to `.vscode/settings.json` of the workspace; the Java extension
+   declares them for the whole window, so they cannot be written per folder.
+2. The Java extension picks them up by itself – no reload, no restart. It then builds the whole project in the
+   background. **For a platform with 234 extensions (516 source folders) that took about 3 minutes**; until then imports
+   still look unresolved and then they disappear all at once.
+3. Types of loaded extensions are resolved from their sources (`src`, `gensrc`, `backoffice/src`, addon sources,
+   test sources) or, for the 86 of 234 extensions that ship no `src`, from `bin/*.jar` (platform `core`, `processing`,
+   most modules). Libraries come from `lib/`, the platform and Tomcat.
+
+Extensions that are **not** in `localextensions.xml` are not part of the project, so their classes stay unresolved by
+design (the platform does not load them either).
+
+### How it was verified
+
+Against a real SAP Commerce 2211-jdk21 CCv2 project (234 loaded extensions) with the real Red Hat Java extension 1.56,
+in a throw-away VS Code profile and a copy-on-write clone of the checkout:
+
+| Situation                                                       | Imports resolved                                                  |
+| --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Java server running, no Java settings                           | 0 of 8 in the test file                                           |
+| `bin/*.jar` of source-less extensions missing (older generator) | core classes unresolved (`SystemSetupParameter`, `PerformResult`) |
+| Configure Java at runtime, server already running               | **8 of 8** in the test file after ≈ 2.5 min                       |
+| Same, 21 random files (code, tests, web, backoffice, addons)    | **239 of 239**                                                    |
+
+The lab is in `packages/extension/test-java` (not part of CI: it needs a platform, the Java extension and minutes):
+
+```bash
+cd packages/extension && node esbuild.java.mjs
+LAB_WORKSPACE=/path/to/core-customize LAB_FILE=/path/to/Some.java LAB_CONFIGURE=1 LAB_LS_FIRST=1 \
+  LAB_REPORT=/tmp/report.txt node dist-java/run.cjs
+```
+
+It copies the installed Java extension into a temporary profile, so your own VS Code is untouched. Run it on a copy of
+your checkout (`cp -cR` on macOS is instant): the Java server writes into the workspace.
+
+Not measured: memory use of the Java server, and platforms other than 2211-jdk21. If the flat project turns out too heavy,
+lower `sapcommerce.java.maxExtensions` or exclude extensions you do not work on.
 
 ## Other tools
 

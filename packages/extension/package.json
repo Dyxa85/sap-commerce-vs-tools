@@ -2,7 +2,7 @@
   "name": "sap-commerce-vs-tools",
   "displayName": "SAP Commerce VS-Tools",
   "description": "Developer tools for SAP Commerce: hAC integration (FlexibleSearch, SQL, Groovy, ImpEx), language support and project navigation. Unofficial, not affiliated with SAP.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "dyxa85",
   "license": "Apache-2.0",
   "repository": {
@@ -572,7 +572,7 @@
         "sapcommerce.java.includeTests": {
           "type": "boolean",
           "default": true,
-          "scope": "resource",
+          "scope": "window",
           "description": "Include test sources (testsrc) when configuring the Java project."
         },
         "sapcommerce.java.excludeExtensions": {
@@ -581,14 +581,14 @@
             "type": "string"
           },
           "default": [],
-          "scope": "resource",
+          "scope": "window",
           "description": "Extensions that are left out when configuring the Java project."
         },
         "sapcommerce.java.maxExtensions": {
           "type": "number",
           "default": 0,
           "minimum": 0,
-          "scope": "resource",
+          "scope": "window",
           "description": "Upper limit of extensions for the Java project (0 = no limit). Lower it if the Java language server becomes slow."
         },
         "sapcommerce.mcp.enableQueries": {

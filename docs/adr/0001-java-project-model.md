@@ -1,9 +1,9 @@
 # ADR 0001 – Java project model for the Red Hat Java language server
 
-- **Status:** Proposed (desk research + measurements; **not yet validated with a running JDT LS**)
+- **Status:** Accepted (validated with a running JDT LS on 2026-10-09, see "Validation result")
 - **Date:** 2026-10-08
 - **Deciders:** project maintainers
-- **Revisit in:** Phase 6 prototype (first task of that phase)
+- **Revisit when:** memory use becomes a problem, or another SAP Commerce version is targeted
 
 ## Context
 
@@ -66,3 +66,21 @@ Prototype with a script that emits the settings block from the extension model, 
 Red Hat Java installed, and record: import time, RAM, correctness of Go-to-Definition into platform classes
 (e.g. a service interface → implementation in a custom extension), behaviour with/without `gensrc`.
 Update this ADR to **Accepted** or **Superseded** with the numbers.
+
+## Validation result (2026-10-09)
+
+Option C works on a real 2211-jdk21 project (234 loaded extensions, 516 source folders, 131 library globs) with the Red Hat
+Java extension 1.56: 239 of 239 imports in 21 random files resolve, after about 3 minutes of build in the background; before
+the setup 0 of 8 resolved in the test file. Eclipse `.project`/`.classpath` files in the extensions were **not** imported as
+separate projects (the server knew exactly one project). Method and numbers: [docs/java-setup.md](../java-setup.md).
+
+What the validation found that the desk research could not know:
+
+1. The Java extension declares `java.project.*` as window settings, so writing them at folder scope failed – the setup
+   could not write anything until this was fixed (write at workspace scope).
+2. 86 of 234 extensions ship their classes only as `bin/*.jar` (platform `core`, `processing`, most modules). Without those
+   jars the classes behind most imports are unresolved. `gensrc` alone does not make an extension a source extension.
+3. `backoffice/src`, `backoffice/testsrc` and `acceleratoraddon/web/src` are source folders too.
+4. There is no "reload project" command to call: the server applies the settings by itself.
+
+Not measured: memory use of the Java server; other platform versions.

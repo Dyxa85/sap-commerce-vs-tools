@@ -7,3 +7,4 @@ LICENSE
 packages/test-fixtures
 .demo
 dist-test
+dist-java

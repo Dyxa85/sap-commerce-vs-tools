@@ -20,8 +20,16 @@ export interface JavaSettingsOptions {
   maxExtensions?: number;
 }
 
-const SOURCE_ROOTS = ['src', 'gensrc', 'web/src', 'web/gensrc'];
-const TEST_ROOTS = ['testsrc', 'web/testsrc'];
+const SOURCE_ROOTS = [
+  'src',
+  'gensrc',
+  'web/src',
+  'web/gensrc',
+  // parts of an extension that are built into other web applications
+  'backoffice/src',
+  'acceleratoraddon/web/src',
+];
+const TEST_ROOTS = ['testsrc', 'web/testsrc', 'backoffice/testsrc', 'acceleratoraddon/web/testsrc'];
 const LIB_DIRS = ['lib', 'web/webroot/WEB-INF/lib'];
 
 const posix = (p: string): string => p.split(sep).join('/');
@@ -70,6 +78,14 @@ export function javaProjectSettings(
     for (const lib of LIB_DIRS) {
       const dir = join(ext.dir, lib);
       if (hasJars(dir)) include.push(`${shown(dir)}/*.jar`);
+    }
+    // An extension without hand-written sources ships its classes as `bin/*.jar` (platform `core` and `processing`, most
+    // modules: 86 of 234 extensions of a real 2211 project). `gensrc` does not count: it holds only generated models,
+    // the real code of such an extension is in the jar. One with a `src` folder is compiled by the Java server itself,
+    // its jar would only be a stale second copy of the same classes.
+    if (!isDir(join(ext.dir, 'src'))) {
+      const bin = join(ext.dir, 'bin');
+      if (hasJars(bin)) include.push(`${shown(bin)}/*.jar`);
     }
   }
 

@@ -188,16 +188,15 @@ export function registerBuildCommands(
       maxExtensions: config.get<number>('maxExtensions') || undefined,
     });
     const conflicts = conflictingBuildFiles(folder.uri.fsPath);
-    const java = vscode.workspace.getConfiguration(undefined, folder.uri);
-    const current = JSON.stringify(
-      JAVA_KEYS.map((k) => java.inspect(k)?.workspaceFolderValue ?? null),
-    );
+    // The Java extension declares these settings for the whole window, so they cannot be written per folder.
+    const java = vscode.workspace.getConfiguration();
+    const current = JSON.stringify(JAVA_KEYS.map((k) => java.inspect(k)?.workspaceValue ?? null));
     const lastWritten = context.workspaceState.get<string>(LAST_WRITTEN);
     const hasForeign =
       current !== JSON.stringify(JAVA_KEYS.map(() => null)) && current !== lastWritten;
 
     const lines = [
-      `${settings['java.project.sourcePaths'].length} source folders and ${settings['java.project.referencedLibraries'].include.length} library folders of ${p.loaded.length} extensions will be written to the settings of "${folder.name}".`,
+      `${settings['java.project.sourcePaths'].length} source folders and ${settings['java.project.referencedLibraries'].include.length} library folders of ${p.loaded.length} extensions will be written to the workspace settings (.vscode/settings.json of "${folder.name}").`,
     ];
     if (conflicts.length > 0)
       lines.push(
@@ -215,7 +214,7 @@ export function registerBuildCommands(
     if (answer !== 'Write settings') return;
     try {
       for (const key of JAVA_KEYS)
-        await java.update(key, settings[key], vscode.ConfigurationTarget.WorkspaceFolder);
+        await java.update(key, settings[key], vscode.ConfigurationTarget.Workspace);
     } catch (err) {
       log.error('Writing the Java settings failed', err);
       void vscode.window.showErrorMessage(
@@ -227,29 +226,23 @@ export function registerBuildCommands(
       LAST_WRITTEN,
       JSON.stringify(
         JAVA_KEYS.map(
-          (k) =>
-            vscode.workspace.getConfiguration(undefined, folder.uri).inspect(k)
-              ?.workspaceFolderValue ?? null,
+          (k) => vscode.workspace.getConfiguration().inspect(k)?.workspaceValue ?? null,
         ),
       ),
     );
-    const reload = await vscode.window.showInformationMessage(
-      'Java settings written. Reload the Java project to apply them.',
-      'Reload project',
+    // The Java extension picks the settings up by itself and builds the project in the background. Measured on a
+    // 2211 project with 234 extensions: about 2.5 minutes, then the errors for unresolved imports are gone.
+    void vscode.window.showInformationMessage(
+      'Java settings written. The Java extension now imports the project; the first build of a whole platform takes a few minutes. Errors about unresolved imports disappear when it is done.',
     );
-    if (reload)
-      await vscode.commands
-        .executeCommand('java.projectConfiguration.update', folder.uri)
-        .then(undefined, () => vscode.commands.executeCommand('java.clean.workspace'));
   });
 
   register('sapcommerce.java.clear', async () => {
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) return;
-    const java = vscode.workspace.getConfiguration(undefined, folder.uri);
+    if (!vscode.workspace.workspaceFolders?.[0]) return;
+    const java = vscode.workspace.getConfiguration();
     try {
       for (const key of JAVA_KEYS)
-        await java.update(key, undefined, vscode.ConfigurationTarget.WorkspaceFolder);
+        await java.update(key, undefined, vscode.ConfigurationTarget.Workspace);
       await context.workspaceState.update(LAST_WRITTEN, undefined);
     } catch (err) {
       log.error('Removing the Java settings failed', err);

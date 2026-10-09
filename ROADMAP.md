@@ -5,14 +5,14 @@ developer, not by effort. Anything marked _needs …_ cannot be built honestly w
 
 ## Next (1.1)
 
-| Item                                  | Why / what                                                                                                                             | Needs                                               |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Validate the Java setup (ADR 0001)    | Install Red Hat Java, open a real platform, measure import time/RAM/go-to-definition; fall back to per-extension projects if too heavy | Red Hat Java extension on a machine with a platform |
-| Real-webview check of the diagrams    | Diagrams were verified in a browser pane with VS Code colour variables simulated                                                       | —                                                   |
-| Cockpit NG / Backoffice configuration | `cockpit-config.xml`, `*_backoffice-config.xml`, widget definitions: completion for editor types, navigation to attributes             | Public schema (the XSDs ship with the platform)     |
-| User-rights blocks in ImpEx           | `$START_USERRIGHTS` … `$END_USERRIGHTS`: validate the fixed column layout, complete type and permission names                          | Observed importer behaviour                         |
-| Free module groups                    | User-defined groups in the Commerce Project view (by name pattern or folder)                                                           | —                                                   |
-| `*-deployment` and `web-spring` files | Deployment tables/typecodes, web contexts                                                                                              | —                                                   |
+| Item                                  | Why / what                                                                                                                 | Needs                                           |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Java memory use                       | Measure the memory of the Java server for a 234-extension project (the setup itself is validated, ADR 0001)                | A machine with a platform                       |
+| Real-webview check of the diagrams    | Diagrams were verified in a browser pane with VS Code colour variables simulated                                           | —                                               |
+| Cockpit NG / Backoffice configuration | `cockpit-config.xml`, `*_backoffice-config.xml`, widget definitions: completion for editor types, navigation to attributes | Public schema (the XSDs ship with the platform) |
+| User-rights blocks in ImpEx           | `$START_USERRIGHTS` … `$END_USERRIGHTS`: validate the fixed column layout, complete type and permission names              | Observed importer behaviour                     |
+| Free module groups                    | User-defined groups in the Commerce Project view (by name pattern or folder)                                               | —                                               |
+| `*-deployment` and `web-spring` files | Deployment tables/typecodes, web contexts                                                                                  | —                                               |
 
 ## Later
 

@@ -137,8 +137,8 @@ Status-Spalte wird laufend gepflegt: ☐ offen · ◐ teilweise · ☑ fertig ·
 
 | #   | Feature                                                | Phase | Status | Anmerkung                                                                                                                                            |
 | --- | ------------------------------------------------------ | ----- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1  | Projekt-/Extension-Import inkl. Abhängigkeitsauflösung | 4, 6  | ◐      | Extension-Graph, Ladereihenfolge und Java-Settings-Generator fertig; Java-Import nicht gegen JDT LS validiert (ADR 0001)                             |
-| F2  | Eclipse-/Maven-/Gradle-Extensions neben Platform       | 4, 6  | ◐      | Extensions aller Layouts werden erkannt; Java-Settings aus geladenen Extensions (nicht gegen JDT LS validiert)                                       |
+| F1  | Projekt-/Extension-Import inkl. Abhängigkeitsauflösung | 4, 6  | ☑      | Extension-Graph, Ladereihenfolge; Java-Setup gegen echten Java-Server validiert (239/239 Imports, `docs/java-setup.md`)                              |
+| F2  | Eclipse-/Maven-/Gradle-Extensions neben Platform       | 4, 6  | ☑      | Extensions aller Layouts; Java-Settings aus geladenen Extensions, validiert an einer echten 2211-Platform                                            |
 | F3  | Modul-Gruppierung über Konfiguration                   | 4     | ◐      | Gruppen Platform/Modules/Custom/Other im Baum; frei definierbare Gruppen → ROADMAP                                                                   |
 | F4  | Kompilieren/Build aus der IDE                          | 6     | ☑      | Ant-Targets als Befehle/Tasks, javac-Problem-Matcher, Server start/debug/stop; Task-Provider per Host-Test geprüft, Ant-Lauf selbst nicht ausgeführt |
 | F5  | Erweiterter Debugger für Model-Klassen (Lazy Eval)     | 11    | ✖      | Debug-API erlaubt keine Custom-Renderer (docs/limitations.md); „Model als Tabelle“ → ROADMAP                                                         |

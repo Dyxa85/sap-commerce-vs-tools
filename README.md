@@ -157,8 +157,9 @@ What is verified and what is not is listed per feature in **[docs/parity.md](doc
 
 - **Not implemented:** ACL and Polyglot Query editors (no public specification), debugger value renderers (VS Code has no API).
   Planned: CCv2 Cloud Portal (builds, deployments), Solr console, Cockpit NG – see the [roadmap](ROADMAP.md).
-- **Not yet verified:** the Java setup against a running Red Hat Java language server, the MCP server from Copilot's agent
-  mode, a real `ant build` started from the task.
+- **Verified on a real platform:** the Java setup (239 of 239 imports resolved in 21 random files of a 234-extension project,
+  see [docs/java-setup.md](docs/java-setup.md)). **Not yet verified:** the MCP server from Copilot's agent mode, a real
+  `ant build` started from the task.
 - Developed and tested on **macOS**; CI runs unit tests and tests inside VS Code on Ubuntu, macOS and Windows.
 
 ## Security and privacy

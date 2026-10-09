@@ -5,6 +5,23 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-09
+
+### Fixed
+
+- **Java: unresolved imports.** _Configure Java for this Project…_ could never write its settings (the Java extension
+  declares `java.project.*` for the whole window, we wrote them per folder), and it pointed the Java server at the wrong
+  things: the `bin/*.jar` of the 86 of 234 extensions that ship no `src` (platform `core`, `processing`, most modules)
+  were missing, as were `backoffice/src`, `backoffice/testsrc` and addon sources. It also offered a "reload" through a
+  command that does not exist. Verified against a real 2211 platform and the real Red Hat Java extension: **239 of 239
+  imports resolve** in 21 random files, about 3 minutes after the setup.
+- The settings `sapcommerce.java.*` are window settings (they logged a warning).
+
+### Added
+
+- A one-time offer to run the Java setup when a project is found, the Java extension is installed and nothing is
+  configured (_Don't ask again_ is remembered per workspace).
+
 ## [0.1.1] - 2026-10-08
 
 ### Added

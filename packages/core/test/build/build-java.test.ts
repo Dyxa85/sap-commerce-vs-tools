@@ -118,6 +118,57 @@ describe('Java project settings', () => {
     expect(libs.exclude).toEqual(['**/bootstrap/bin/models.jar']);
   });
 
+  it('references bin jars only of extensions without a src folder', async () => {
+    const hybris = join(root, 'hybris');
+    // no sources at all: the classes are in the jar
+    make('hybris/bin/modules/nosrc/bin', ['nosrcserver.jar']);
+    // generated sources only (like platform "processing"): the code is still only in the jar
+    make('hybris/bin/modules/gensrcOnly/gensrc');
+    make('hybris/bin/modules/gensrcOnly/bin', ['gensrcOnlyserver.jar']);
+    // real sources: compiled by the Java server, the jar would be a stale copy
+    make('hybris/bin/modules/withsrc/src');
+    make('hybris/bin/modules/withsrc/bin', ['withsrcserver.jar']);
+    for (const name of ['nosrc', 'gensrcOnly', 'withsrc']) {
+      writeFileSync(
+        join(hybris, `bin/modules/${name}/extensioninfo.xml`),
+        `<extensioninfo><extension name="${name}"/></extensioninfo>`,
+      );
+    }
+    writeFileSync(
+      join(hybris, 'config/localextensions.xml'),
+      '<hybrisconfig><extensions><path dir="${HYBRIS_BIN_DIR}"/><extension name="alpha"/><extension name="nosrc"/><extension name="gensrcOnly"/><extension name="withsrc"/></extensions></hybrisconfig>',
+    );
+    const withModules = await loadPlatform(hybris);
+    const libs = javaProjectSettings(withModules, { base: root })[
+      'java.project.referencedLibraries'
+    ].include;
+    expect(libs).toContain('hybris/bin/modules/nosrc/bin/*.jar');
+    expect(libs).toContain('hybris/bin/modules/gensrcOnly/bin/*.jar');
+    expect(libs).not.toContain('hybris/bin/modules/withsrc/bin/*.jar');
+  });
+
+  it('lists backoffice and addon source folders', async () => {
+    const hybris = join(root, 'hybris');
+    make('hybris/bin/custom/alpha/backoffice/src');
+    make('hybris/bin/custom/alpha/backoffice/testsrc');
+    make('hybris/bin/custom/alpha/acceleratoraddon/web/src');
+    const settings = javaProjectSettings(await loadPlatform(hybris), { base: root });
+    expect(settings['java.project.sourcePaths']).toEqual(
+      expect.arrayContaining([
+        'hybris/bin/custom/alpha/backoffice/src',
+        'hybris/bin/custom/alpha/backoffice/testsrc',
+        'hybris/bin/custom/alpha/acceleratoraddon/web/src',
+      ]),
+    );
+    const noTests = javaProjectSettings(await loadPlatform(hybris), {
+      base: root,
+      includeTests: false,
+    });
+    expect(noTests['java.project.sourcePaths']).not.toContain(
+      'hybris/bin/custom/alpha/backoffice/testsrc',
+    );
+  });
+
   it('can leave out tests and single extensions', () => {
     const s = javaProjectSettings(project, { base: root, includeTests: false, exclude: ['alpha'] });
     expect(s['java.project.sourcePaths'].some((p) => p.includes('alpha'))).toBe(false);

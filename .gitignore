@@ -15,3 +15,4 @@ packages/extension/THIRD-PARTY-NOTICES.txt
 *.vsix
 
 .demo/
+dist-java/

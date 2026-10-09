@@ -8,6 +8,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/out/**',
       '**/dist-test/**',
+      '**/dist-java/**',
       '.demo/**',
       '**/node_modules/**',
       'packages/test-fixtures/**',

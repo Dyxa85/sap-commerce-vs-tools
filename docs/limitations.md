@@ -18,4 +18,4 @@ Things this extension deliberately does not do (yet) or cannot do in VS Code, an
 - ImpEx validation in the hAC is weaker than the import itself. The language server reports many problems the validator accepts (unknown mode, surplus cells, undefined macros, missing unique columns), based on observed import behaviour (see `docs/impex-behaviour.md`).
 - Type- and attribute-aware features need the project index, which is built from the `items.xml` files of the loaded extensions. Without a SAP Commerce project in the workspace they stay silent instead of guessing.
 - Spring `class="…"` navigation works where the Java source is part of a loaded extension; classes that only exist in JARs cannot be opened.
-- Java support depends on the Red Hat Java extension and is not yet validated against it (see `docs/java-setup.md`).
+- Java support depends on the Red Hat Java extension. It was validated against it on one real 2211 platform (`docs/java-setup.md`); the first build of a whole platform takes a few minutes.

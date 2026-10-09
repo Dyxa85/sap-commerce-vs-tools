@@ -15,6 +15,7 @@ import { History } from './history.js';
 import { ResultsPanel } from './ui/results-panel.js';
 import { DiagramPanel } from './ui/diagram-panel.js';
 import { TypePanel } from './ui/type-panel.js';
+import { registerJavaOffer } from './java/offer.js';
 import { McpProvider } from './mcp/provider.js';
 import { LanguageServerController } from './language/client.js';
 import { registerProjectView } from './project/commands.js';
@@ -68,6 +69,7 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
   const tasks = new CommerceTaskProvider(project);
   context.subscriptions.push(tasks);
   registerBuildCommands(context, project, tasks, log);
+  registerJavaOffer(context, project);
   const mcp = new McpProvider(context, project, manager, log);
   context.subscriptions.push(mcp);
 
