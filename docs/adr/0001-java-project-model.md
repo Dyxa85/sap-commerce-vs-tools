@@ -84,3 +84,12 @@ What the validation found that the desk research could not know:
 4. There is no "reload project" command to call: the server applies the settings by itself.
 
 Not measured: memory use of the Java server; other platform versions.
+
+### Addendum (0.1.4): compiled output instead of sources for platform and modules
+
+The all-sources project ran the default 2 GB heap of the Java server out of memory on a 234-extension platform. The project
+model stays option C, but platform and modules are now taken from the result of `ant build`: `bin/*.jar` and the `classes`
+folders. JDT ignores `classes` folders in `java.project.referencedLibraries` (measured: one import unresolved), so they are
+packed to jars in `.sapcommerce/libs`. Own (`custom`) extensions remain sources for live diagnostics. Unbuilt extensions
+fall back to sources. Trade-off: no source navigation into platform code. `sapcommerce.java.mode: sources` keeps the old
+behaviour. Numbers: [docs/java-setup.md](../java-setup.md).

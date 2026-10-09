@@ -1,14 +1,25 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
+import { crc32 } from 'node:zlib';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   antInvocation,
+  classJarPath,
   conflictingBuildFiles,
   debugPort,
   isValidArgument,
   javaProjectSettings,
   loadPlatform,
+  packClassFolders,
   serverInvocation,
   type PlatformProject,
 } from '../../src/index.js';
@@ -167,6 +178,105 @@ describe('Java project settings', () => {
     expect(noTests['java.project.sourcePaths']).not.toContain(
       'hybris/bin/custom/alpha/backoffice/testsrc',
     );
+  });
+
+  it('takes platform and modules from the Ant build in compiled mode', async () => {
+    const hybris = join(root, 'hybris');
+    // built module with sources and a jar; built module with sources and only a classes folder; never built module
+    make('hybris/bin/modules/withsrc/classes/com');
+    make('hybris/bin/modules/classesOnly/src');
+    make('hybris/bin/modules/classesOnly/classes/com');
+    make('hybris/bin/modules/unbuilt/src');
+    make('hybris/bin/modules/unbuilt/classes');
+    for (const name of ['classesOnly', 'unbuilt']) {
+      writeFileSync(
+        join(hybris, `bin/modules/${name}/extensioninfo.xml`),
+        `<extensioninfo><extension name="${name}"/></extensioninfo>`,
+      );
+    }
+    writeFileSync(
+      join(hybris, 'config/localextensions.xml'),
+      '<hybrisconfig><extensions><path dir="${HYBRIS_BIN_DIR}"/><extension name="alpha"/><extension name="withsrc"/><extension name="classesOnly"/><extension name="unbuilt"/></extensions></hybrisconfig>',
+    );
+    const loaded = await loadPlatform(hybris);
+
+    const jars = javaProjectSettings(loaded, { base: root, mode: 'compiled' });
+    const sources = jars['java.project.sourcePaths'];
+    // own code stays source, built modules are not compiled again, an unbuilt one falls back to its sources
+    expect(sources).toContain('hybris/bin/custom/alpha/src');
+    expect(sources).not.toContain('hybris/bin/modules/withsrc/src');
+    // no jar and classes folders not requested: nothing to take from the build
+    expect(sources).toContain('hybris/bin/modules/classesOnly/src');
+    expect(sources).toContain('hybris/bin/modules/unbuilt/src');
+    expect(jars['java.project.referencedLibraries'].include).toContain(
+      'hybris/bin/modules/withsrc/bin/*.jar',
+    );
+    // the existing models.jar replaces the generated sources
+    expect(sources).not.toContain('hybris/bin/platform/bootstrap/gensrc');
+    expect(jars['java.project.referencedLibraries'].exclude).toEqual([]);
+
+    // classes folders are only used through jars made from them, and only when they hold something
+    const withClasses = javaProjectSettings(loaded, {
+      base: root,
+      mode: 'compiled',
+      classJarsDir: join(root, '.sapcommerce/libs'),
+    });
+    expect(withClasses['java.project.referencedLibraries'].include).toContain(
+      '.sapcommerce/libs/classesOnly.jar',
+    );
+    expect(withClasses['java.project.sourcePaths']).not.toContain(
+      'hybris/bin/modules/classesOnly/src',
+    );
+    expect(withClasses['java.project.sourcePaths']).toContain('hybris/bin/modules/unbuilt/src');
+    expect(withClasses['java.project.referencedLibraries'].include).not.toContain(
+      '.sapcommerce/libs/unbuilt.jar',
+    );
+
+    // without a models.jar (clean checkout) the generated model sources are needed
+    rmSync(join(hybris, 'bin/platform/bootstrap/bin/models.jar'));
+    const unbuilt = javaProjectSettings(loaded, { base: root, mode: 'compiled' });
+    expect(unbuilt['java.project.sourcePaths']).toContain('hybris/bin/platform/bootstrap/gensrc');
+  });
+
+  it('packs classes folders into jars the Java server can read, and only again when they changed', async () => {
+    const hybris = join(root, 'hybris');
+    writeFileSync(join(hybris, 'bin/modules/classesOnly/classes/com/A.class'), 'AAAA');
+    writeFileSync(join(hybris, 'bin/modules/classesOnly/classes/B.class'), 'bb');
+    const loaded = await loadPlatform(hybris);
+    const out = join(root, '.sapcommerce/libs');
+    const first = await packClassFolders(loaded, out);
+    expect(first.failed).toEqual([]);
+    expect(first.packed).toBeGreaterThanOrEqual(1);
+    expect(readdirSync(out).filter((f) => f.endsWith('.tmp'))).toEqual([]);
+
+    // read the archive back: names, content and checksums
+    const jar = readFileSync(classJarPath(out, 'classesOnly'));
+    expect(jar.readUInt32LE(jar.length - 22)).toBe(0x06054b50);
+    const count = jar.readUInt16LE(jar.length - 12);
+    let at = jar.readUInt32LE(jar.length - 6);
+    const found: Record<string, string> = {};
+    for (let i = 0; i < count; i++) {
+      const crc = jar.readUInt32LE(at + 16);
+      const size = jar.readUInt32LE(at + 20);
+      const nameLength = jar.readUInt16LE(at + 28);
+      const local = jar.readUInt32LE(at + 42);
+      const name = jar.subarray(at + 46, at + 46 + nameLength).toString('utf8');
+      const start = local + 30 + jar.readUInt16LE(local + 26);
+      const data = jar.subarray(start, start + size);
+      expect(crc32(data)).toBe(crc);
+      found[name] = data.toString();
+      at += 46 + nameLength;
+    }
+    expect(found).toEqual({ 'com/A.class': 'AAAA', 'B.class': 'bb' });
+
+    const again = await packClassFolders(loaded, out);
+    expect(again.packed).toBe(0);
+    expect(again.upToDate).toBe(first.packed);
+    // a newer class file makes the jar out of date
+    const later = new Date(Date.now() + 5000);
+    writeFileSync(join(hybris, 'bin/modules/classesOnly/classes/C.class'), 'c');
+    utimesSync(join(hybris, 'bin/modules/classesOnly/classes/C.class'), later, later);
+    expect((await packClassFolders(loaded, out)).packed).toBe(1);
   });
 
   it('can leave out tests and single extensions', () => {

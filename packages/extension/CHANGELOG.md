@@ -5,6 +5,20 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-09
+
+### Changed
+
+- **Java: platform and modules now come from your Ant build** instead of being compiled a second time. The Java server
+  (Eclipse JDT) takes only jars as libraries, so _Configure Java_ packs the `classes` folders of the built extensions into
+  `.sapcommerce/libs/<extension>.jar` (143 jars in 7 s, 1 s when nothing changed) and lists them together with the existing
+  `bin/*.jar`. Your own extensions (`custom`) stay sources, so errors, completion and refactoring for your code are live. An
+  extension that Ant has not built (after `ant clean`) falls back to its sources, `bootstrap/gensrc` is used while
+  `models.jar` is missing. After an Ant target finished successfully the jars and, if needed, the settings are updated.
+  New setting `sapcommerce.java.mode` (`compiled` default, `sources` for the previous behaviour).
+- Reason: with all 558 source folders compiled by the Java server, the default 2 GB heap was not enough ("The Java Language
+  Server encountered an OutOfMemory error"). Numbers in [docs/java-setup.md](../../docs/java-setup.md).
+
 ## [0.1.3] - 2026-10-09
 
 ### Changed

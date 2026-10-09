@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import * as vscode from 'vscode';
 import {
   ANT_TARGETS,
@@ -5,6 +6,7 @@ import {
   debugPort,
   isValidArgument,
   javaProjectSettings,
+  packClassFolders,
   type PlatformProject,
 } from '@sapcommerce-vstools/core';
 import { ANT_TASK, SERVER_TASK, type CommerceTaskProvider } from '../build/tasks.js';
@@ -165,6 +167,47 @@ export function registerBuildCommands(
   });
 
   // ---- Java project setup (ADR 0001, option C)
+  const CLASS_JARS = '.sapcommerce/libs';
+  const javaMode = (): string =>
+    vscode.workspace.getConfiguration('sapcommerce.java').get<string>('mode', 'compiled');
+  const workspaceJava = (): string =>
+    JSON.stringify(
+      JAVA_KEYS.map((k) => vscode.workspace.getConfiguration().inspect(k)?.workspaceValue ?? null),
+    );
+
+  /** The settings for this project, in the mode the user chose; packs the Ant build's classes for `compiled`. */
+  async function javaSettingsFor(
+    p: PlatformProject,
+    folder: vscode.WorkspaceFolder,
+  ): Promise<ReturnType<typeof javaProjectSettings>> {
+    const config = vscode.workspace.getConfiguration('sapcommerce.java');
+    const exclude = config.get<string[]>('excludeExtensions', []);
+    const options = {
+      base: folder.uri.fsPath,
+      includeTests: config.get<boolean>('includeTests', true),
+      exclude,
+      maxExtensions: config.get<number>('maxExtensions') || undefined,
+    };
+    if (javaMode() === 'sources') return javaProjectSettings(p, options);
+    const classJarsDir = join(folder.uri.fsPath, CLASS_JARS);
+    const result = await packClassFolders(p, classJarsDir, { exclude });
+    for (const f of result.failed)
+      log.warn(`Could not pack the classes of ${f.extension}: ${f.reason}`);
+    log.info(
+      `Java: ${result.packed} jars made from the classes folders of the Ant build, ${result.upToDate} up to date, ${result.empty} extensions without classes.`,
+    );
+    return javaProjectSettings(p, { ...options, mode: 'compiled', classJarsDir });
+  }
+
+  async function writeJavaSettings(
+    settings: ReturnType<typeof javaProjectSettings>,
+  ): Promise<void> {
+    const java = vscode.workspace.getConfiguration();
+    for (const key of JAVA_KEYS)
+      await java.update(key, settings[key], vscode.ConfigurationTarget.Workspace);
+    await context.workspaceState.update(LAST_WRITTEN, workspaceJava());
+  }
+
   register('sapcommerce.java.configure', async () => {
     const p = await chooseProject(project);
     if (!p) return;
@@ -180,23 +223,18 @@ export function registerBuildCommands(
       if (open) await vscode.commands.executeCommand('workbench.extensions.search', 'redhat.java');
       return;
     }
-    const config = vscode.workspace.getConfiguration('sapcommerce.java');
-    const settings = javaProjectSettings(p, {
-      base: folder.uri.fsPath,
-      includeTests: config.get<boolean>('includeTests', true),
-      exclude: config.get<string[]>('excludeExtensions', []),
-      maxExtensions: config.get<number>('maxExtensions') || undefined,
-    });
     const conflicts = conflictingBuildFiles(folder.uri.fsPath);
     // The Java extension declares these settings for the whole window, so they cannot be written per folder.
-    const java = vscode.workspace.getConfiguration();
-    const current = JSON.stringify(JAVA_KEYS.map((k) => java.inspect(k)?.workspaceValue ?? null));
+    const current = workspaceJava();
     const lastWritten = context.workspaceState.get<string>(LAST_WRITTEN);
     const hasForeign =
       current !== JSON.stringify(JAVA_KEYS.map(() => null)) && current !== lastWritten;
 
     const lines = [
-      `${settings['java.project.sourcePaths'].length} source folders and ${settings['java.project.referencedLibraries'].include.length} library folders of ${p.loaded.length} extensions will be written to the workspace settings (.vscode/settings.json of "${folder.name}").`,
+      javaMode() === 'sources'
+        ? `The sources of all ${p.loaded.length} loaded extensions are compiled by the Java extension. This gives navigation into platform sources but needs several GB of memory.`
+        : `Your own extensions are compiled by the Java extension, so you get live errors and completion. Platform and modules are taken from the result of your Ant build (bin/*.jar and the classes folders, packed to ${CLASS_JARS}), so what you see matches what Ant compiled. Run "ant build" first; extensions that are not built yet fall back to their sources.`,
+      `The settings are written to the workspace settings (.vscode/settings.json of "${folder.name}").`,
     ];
     if (conflicts.length > 0)
       lines.push(
@@ -213,8 +251,11 @@ export function registerBuildCommands(
     );
     if (answer !== 'Write settings') return;
     try {
-      for (const key of JAVA_KEYS)
-        await java.update(key, settings[key], vscode.ConfigurationTarget.Workspace);
+      const settings = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: 'Preparing the Java setup' },
+        () => javaSettingsFor(p, folder),
+      );
+      await writeJavaSettings(settings);
     } catch (err) {
       log.error('Writing the Java settings failed', err);
       void vscode.window.showErrorMessage(
@@ -222,24 +263,41 @@ export function registerBuildCommands(
       );
       return;
     }
-    await context.workspaceState.update(
-      LAST_WRITTEN,
-      JSON.stringify(
-        JAVA_KEYS.map(
-          (k) => vscode.workspace.getConfiguration().inspect(k)?.workspaceValue ?? null,
-        ),
-      ),
-    );
-    // The Java extension picks the settings up by itself and builds the project in the background. Measured on a
-    // 2211 project with 234 extensions: about 2.5 minutes, then the errors for unresolved imports are gone.
+    // The Java extension picks the settings up by itself and builds the project in the background.
     vscode.window.setStatusBarMessage(
       '$(sync~spin) Java: building the SAP Commerce project – unresolved imports disappear in a few minutes',
       240_000,
     );
     void vscode.window.showInformationMessage(
-      'Java settings written. The Java extension now imports the project; the first build of a whole platform takes a few minutes. Errors about unresolved imports disappear when it is done.',
+      'Java settings written. The Java extension now imports the project; the first build takes a few minutes. Errors about unresolved imports disappear when it is done.',
     );
   });
+
+  // After an Ant target finished the compiled classes changed: pack them again and, if the set of libraries changed
+  // (a module was built or cleaned), update the settings this command wrote earlier. Settings of the user stay alone.
+  context.subscriptions.push(
+    vscode.tasks.onDidEndTaskProcess(async (e) => {
+      if (e.exitCode !== 0 || e.execution.task.definition.type !== ANT_TASK) return;
+      if (javaMode() === 'sources') return;
+      const lastWritten = context.workspaceState.get<string>(LAST_WRITTEN);
+      if (lastWritten === undefined || lastWritten !== workspaceJava()) return;
+      try {
+        for (const p of project.projects) {
+          const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(p.hybrisDir));
+          if (!folder) continue;
+          const settings = await javaSettingsFor(p, folder);
+          const config = vscode.workspace.getConfiguration();
+          const same = JAVA_KEYS.every(
+            (k) =>
+              JSON.stringify(config.inspect(k)?.workspaceValue) === JSON.stringify(settings[k]),
+          );
+          if (!same) await writeJavaSettings(settings);
+        }
+      } catch (err) {
+        log.error('Updating the Java setup after the build failed', err);
+      }
+    }),
+  );
 
   register('sapcommerce.java.clear', async () => {
     if (!vscode.workspace.workspaceFolders?.[0]) return;

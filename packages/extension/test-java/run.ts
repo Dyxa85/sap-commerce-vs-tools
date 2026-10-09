@@ -39,7 +39,10 @@ async function main(): Promise<void> {
   writeFileSync(
     join(userData, 'User', 'settings.json'),
     JSON.stringify({
-      'java.jdt.ls.vmargs': '-XX:+UseParallelGC -Xmx4G -Xms512m',
+      // LAB_VMARGS=default keeps the Java extension's own default (-Xmx2G), which is what a user normally has
+      ...(process.env.LAB_VMARGS === 'default'
+        ? {}
+        : { 'java.jdt.ls.vmargs': process.env.LAB_VMARGS ?? '-XX:+UseParallelGC -Xmx4G -Xms512m' }),
       'telemetry.telemetryLevel': 'off',
       'update.mode': 'none',
     }),

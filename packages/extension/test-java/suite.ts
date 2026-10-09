@@ -175,7 +175,7 @@ export async function run(): Promise<void> {
     same = key === previous ? same + 1 : 0;
     previous = key;
     if (unresolved.length === 0 || same >= Number(env('LAB_STABLE_POLLS', '18'))) break; // default: unchanged for 6 minutes
-    await sleep(20000);
+    await sleep(Number(env('LAB_POLL_MS', '20000')));
   }
   for (const u of unresolved) log(`  NOT RESOLVED: ${u}`);
   // a sample of other files: how many of their imports does the server resolve?
@@ -213,5 +213,91 @@ export async function run(): Promise<void> {
   }
   if (sample.length)
     log(`SAMPLE imports resolved: ${sampleResolved} of ${sampleTotal} in ${sample.length} files`);
+  // ---- cost of the Java build: restart, a small edit, and what `ant clean all` does (rewrites every gensrc file)
+  if (env('LAB_MEASURE') === '1') {
+    const { execSync } = await import('node:child_process');
+    const { readdirSync, statSync, utimesSync, appendFileSync: append } = await import('node:fs');
+    const mark = env('LAB_BASE', 'sapc-javalab');
+    const sampleServer = (): { cpu: number; rssMb: number } | undefined => {
+      const out = execSync('ps -axo pid=,pcpu=,rss=,command=', {
+        encoding: 'utf8',
+        maxBuffer: 64 << 20,
+      });
+      const rows = out
+        .split('\n')
+        .filter((l) => l.includes('org.eclipse.equinox.launcher') && l.includes(mark))
+        .map((l) => l.trim().split(/\s+/))
+        .map((c) => ({ cpu: Number(c[1]), rssMb: Number(c[2]) / 1024 }));
+      return rows.length
+        ? { cpu: Math.max(...rows.map((r) => r.cpu)), rssMb: Math.max(...rows.map((r) => r.rssMb)) }
+        : undefined;
+    };
+    /** Busy = the server uses CPU. Idle = below 8 % for 20 s in a row. Returns seconds until idle and the peak memory. */
+    const untilIdle = async (label: string, maxSeconds = 900): Promise<void> => {
+      const t0 = Date.now();
+      let idleSince = 0;
+      let peak = 0;
+      let busySeen = false;
+      while ((Date.now() - t0) / 1000 < maxSeconds) {
+        await sleep(2000);
+        const m = sampleServer();
+        if (!m) continue;
+        peak = Math.max(peak, m.rssMb);
+        if (m.cpu >= 8) {
+          busySeen = true;
+          idleSince = 0;
+        } else if (!idleSince) idleSince = Date.now();
+        // a build that has not started yet looks idle: wait for the first busy sample (at most 20 s)
+        if (idleSince && Date.now() - idleSince >= 20000 && (busySeen || Date.now() - t0 > 20000))
+          break;
+      }
+      const end = idleSince && idleSince > t0 ? idleSince : Date.now();
+      log(
+        `${label}: busy for ${Math.round((end - t0) / 1000)} s (peak memory ${Math.round(peak)} MB, busy seen: ${busySeen})`,
+      );
+    };
+
+    await untilIdle('restart (already built profile)');
+
+    // a small edit saved to disk
+    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+    const editor = await vscode.window.showTextDocument(doc);
+    const original = doc.getText();
+    await editor.edit((b) =>
+      b.insert(
+        doc.positionAt(original.lastIndexOf('}')),
+        '\n    // lab edit\n    private int labField = 1;\n',
+      ),
+    );
+    await doc.save();
+    await untilIdle('one saved edit');
+    await editor.edit((b) =>
+      b.replace(
+        new vscode.Range(doc.positionAt(0), doc.positionAt(doc.getText().length)),
+        original,
+      ),
+    );
+    await doc.save();
+    await untilIdle('edit reverted');
+
+    // what `ant clean all` does to the Java server: every generated source file is written again
+    const touched: string[] = [];
+    const walk = (dir: string, depth = 0): void => {
+      for (const name of readdirSync(dir)) {
+        const p = `${dir}/${name}`;
+        const st = statSync(p);
+        if (st.isDirectory()) walk(p, depth + 1);
+        else if (name.endsWith('.java')) touched.push(p);
+      }
+    };
+    const gensrcDirs = env('LAB_GENSRC').split(',').filter(Boolean);
+    for (const d of gensrcDirs) walk(d);
+    const now = new Date();
+    for (const f of touched) utimesSync(f, now, now);
+    log(`rewrote ${touched.length} generated source files in ${gensrcDirs.length} gensrc folders`);
+    await untilIdle('after "ant clean all" (all gensrc files rewritten)', 1500);
+    append(report, '');
+  }
+
   log('DONE');
 }
