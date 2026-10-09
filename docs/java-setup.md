@@ -43,8 +43,11 @@ Generated model classes (`bootstrap/gensrc`, extension `gensrc`) exist only afte
 
 ### What to expect
 
-1. Run **SAP Commerce: Configure Java for this Project…** (or answer the offer that appears once when a project is found
-   and the Java extension is installed). The settings go to `.vscode/settings.json` of the workspace; the Java extension
+1. Run **SAP Commerce: Configure Java for this Project…**. You do not have to find it: while Java is not set up (project
+   found, Red Hat Java installed, nothing configured) three things point to it – a **warning item in the status bar**
+   ("Java: set up SAP Commerce"), a **clickable entry at the top of the Commerce Project view**, and a **quick fix on the red
+   underlines** (lightbulb → "Set up Java for this SAP Commerce project…"). A notification asks once as well. All of them
+   disappear when the setup is done. The settings go to `.vscode/settings.json` of the workspace; the Java extension
    declares them for the whole window, so they cannot be written per folder.
 2. The Java extension picks them up by itself – no reload, no restart. It then builds the whole project in the
    background. **For a platform with 234 extensions (516 source folders) that took about 3 minutes**; until then imports

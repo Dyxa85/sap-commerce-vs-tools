@@ -255,3 +255,69 @@ describe('side bar views', () => {
     assert.match(vscode.window.activeTextEditor!.document.getText(), /^SELECT /);
   });
 });
+
+describe('Java setup hint', () => {
+  it('shows the entry, the status bar item and a quick fix until Java is set up', async () => {
+    const api = await getApi();
+    await api.project.refresh();
+    const hint = api.javaHint;
+    assert.equal(hint.active, false, 'the Java extension is not part of the test profile');
+    hint.forceJavaInstalled = true;
+    try {
+      hint.evaluate();
+      assert.equal(hint.active, true);
+
+      // an entry at the top of the Commerce Project view
+      const roots = await api.projectTree.getChildren();
+      assert.equal(roots[0]?.kind, 'javaHint');
+      const item = api.projectTree.getTreeItem(roots[0]!);
+      assert.equal(item.command?.command, 'sapcommerce.java.configure');
+
+      // a quick fix on a Java "cannot be resolved" error inside the project
+      const file = (
+        await vscode.workspace.findFiles('**/DefaultAcmeBadgeService.java', undefined, 1)
+      )[0]!;
+      const diagnostics = vscode.languages.createDiagnosticCollection('java-test');
+      const diagnostic = new vscode.Diagnostic(
+        new vscode.Range(2, 7, 2, 9),
+        'The import de cannot be resolved',
+        vscode.DiagnosticSeverity.Error,
+      );
+      diagnostic.source = 'Java';
+      diagnostics.set(file, [diagnostic]);
+      try {
+        const document = await vscode.workspace.openTextDocument(file);
+        const actions = hint.provideCodeActions(document, new vscode.Range(2, 7, 2, 9), {
+          diagnostics: [diagnostic],
+          triggerKind: vscode.CodeActionTriggerKind.Invoke,
+          only: undefined,
+        });
+        assert.equal(actions.length, 1);
+        assert.match(actions[0]!.title, /Set up Java/);
+        assert.equal(actions[0]!.command?.command, 'sapcommerce.java.configure');
+        // other Java errors and other sources get nothing
+        const other = new vscode.Diagnostic(
+          new vscode.Range(0, 0, 0, 1),
+          'Unused variable',
+          vscode.DiagnosticSeverity.Warning,
+        );
+        other.source = 'Java';
+        assert.equal(
+          hint.provideCodeActions(document, new vscode.Range(0, 0, 0, 1), {
+            diagnostics: [other],
+            triggerKind: vscode.CodeActionTriggerKind.Invoke,
+            only: undefined,
+          }).length,
+          0,
+        );
+      } finally {
+        diagnostics.dispose();
+      }
+    } finally {
+      hint.forceJavaInstalled = false;
+      hint.evaluate();
+    }
+    const roots = await api.projectTree.getChildren();
+    assert.notEqual(roots[0]?.kind, 'javaHint');
+  });
+});

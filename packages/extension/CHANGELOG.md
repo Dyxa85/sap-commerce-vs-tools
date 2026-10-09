@@ -5,6 +5,16 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-09
+
+### Changed
+
+- **The Java setup can no longer be missed.** In 0.1.2 it was offered once in a notification that is easy to overlook, and
+  users were left with unresolved imports. While a project is found, the Red Hat Java extension is installed and nothing
+  is configured, three hints stay: a warning item in the status bar, a clickable entry at the top of the Commerce Project
+  view, and a quick fix on the red "cannot be resolved" underlines. They disappear when Java is set up. After the setup
+  the status bar says that the build is running (about 3 minutes). The log says why the hint is or is not shown.
+
 ## [0.1.2] - 2026-10-09
 
 ### Fixed

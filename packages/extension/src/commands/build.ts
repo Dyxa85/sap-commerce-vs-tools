@@ -232,6 +232,10 @@ export function registerBuildCommands(
     );
     // The Java extension picks the settings up by itself and builds the project in the background. Measured on a
     // 2211 project with 234 extensions: about 2.5 minutes, then the errors for unresolved imports are gone.
+    vscode.window.setStatusBarMessage(
+      '$(sync~spin) Java: building the SAP Commerce project – unresolved imports disappear in a few minutes',
+      240_000,
+    );
     void vscode.window.showInformationMessage(
       'Java settings written. The Java extension now imports the project; the first build of a whole platform takes a few minutes. Errors about unresolved imports disappear when it is done.',
     );

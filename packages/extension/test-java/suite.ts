@@ -40,6 +40,8 @@ export async function run(): Promise<void> {
     await sleep(Number(env('LAB_LS_FIRST_PAUSE', '60')) * 1000);
     log('language server was running before configuring');
   }
+  const hintApi = ownApi as unknown as { javaHint?: { active: boolean } } | undefined;
+  log(`java hint active before configuring: ${hintApi?.javaHint?.active}`);
   if (env('LAB_CONFIGURE') === '1' && phase !== 'verify') {
     const original = vscode.window.showInformationMessage;
     (vscode.window as unknown as Record<string, unknown>).showInformationMessage = async (
@@ -55,6 +57,8 @@ export async function run(): Promise<void> {
       (vscode.window as unknown as Record<string, unknown>).showInformationMessage = original;
     }
     log('sapcommerce.java.configure done');
+    await sleep(2000);
+    log(`java hint active after configuring: ${hintApi?.javaHint?.active}`);
   }
 
   if (env('LAB_LIST_COMMANDS') === '1') {

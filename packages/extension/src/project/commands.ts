@@ -13,6 +13,7 @@ export function registerProjectView(
     showCollapseAll: true,
   });
   context.subscriptions.push(view, { dispose: () => tree.dispose() });
+  tree.attach(view);
 
   const register = (id: string, fn: (...args: never[]) => unknown): void => {
     context.subscriptions.push(vscode.commands.registerCommand(id, fn));

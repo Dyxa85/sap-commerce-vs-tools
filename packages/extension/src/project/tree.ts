@@ -13,6 +13,7 @@ import { listFolder, parseHidden, roleOf } from './folders.js';
 import type { ProjectService } from './service.js';
 
 export type Node =
+  | { kind: 'javaHint' }
   | { kind: 'project'; project: PlatformProject }
   | { kind: 'config'; project: PlatformProject }
   | {
@@ -76,6 +77,7 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
   readonly onDidChangeTreeData = this.emitter.event;
   private readonly subscription: vscode.Disposable;
 
+  private view: vscode.TreeView<Node> | undefined;
   private watchers: vscode.Disposable[] = [];
   private timer: NodeJS.Timeout | undefined;
 
@@ -86,6 +88,20 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
     });
     this.watch();
   }
+
+  /** The view this tree belongs to, so a message can be shown above it. */
+  attach(view: vscode.TreeView<Node>): void {
+    this.view = view;
+  }
+
+  /** Shows or hides the entry at the top that leads to the Java setup. */
+  setJavaHint(visible: boolean): void {
+    if (this.javaHint === visible) return;
+    this.javaHint = visible;
+    this.emitter.fire(undefined);
+  }
+
+  javaHint = false;
 
   /** New and deleted files change what the folder tree shows (edits do not), so only those are watched. */
   private watch(): void {
@@ -129,6 +145,22 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     switch (node.kind) {
+      case 'javaHint': {
+        const item = new vscode.TreeItem(
+          'Java is not set up – click to configure',
+          vscode.TreeItemCollapsibleState.None,
+        );
+        item.iconPath = new vscode.ThemeIcon(
+          'warning',
+          new vscode.ThemeColor('list.warningForeground'),
+        );
+        item.description = 'imports show as unresolved';
+        item.tooltip = new vscode.MarkdownString(
+          'The Java extension does not know the classes of the platform and your extensions yet.\n\nClick to set it up. The first build takes a few minutes.',
+        );
+        item.command = { command: 'sapcommerce.java.configure', title: 'Set up Java' };
+        return item;
+      }
       case 'project': {
         const item = new vscode.TreeItem(
           projectLabel(node.project),
@@ -219,7 +251,11 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
 
   async getChildren(node?: Node): Promise<Node[]> {
     if (!node) {
-      return this.service.projects.map((project) => ({ kind: 'project' as const, project }));
+      const projects = this.service.projects.map((project) => ({
+        kind: 'project' as const,
+        project,
+      }));
+      return this.javaHint ? [{ kind: 'javaHint' as const }, ...projects] : projects;
     }
     switch (node.kind) {
       case 'project': {
@@ -297,6 +333,7 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
             : { kind: 'file' as const, path: node.info.infoFile, label: `${name} (missing)` };
         });
       case 'file':
+      case 'javaHint':
         return [];
     }
   }

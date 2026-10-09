@@ -15,7 +15,7 @@ import { History } from './history.js';
 import { ResultsPanel } from './ui/results-panel.js';
 import { DiagramPanel } from './ui/diagram-panel.js';
 import { TypePanel } from './ui/type-panel.js';
-import { registerJavaOffer } from './java/offer.js';
+import { JavaHint } from './java/offer.js';
 import { McpProvider } from './mcp/provider.js';
 import { LanguageServerController } from './language/client.js';
 import { registerProjectView } from './project/commands.js';
@@ -37,6 +37,7 @@ export interface TestApi {
   mcp: McpProvider;
   ccv2: Ccv2Parts;
   connectionsPanel: ConnectionsPanel;
+  javaHint: JavaHint;
   sideBar: SideBar;
   /** Time `activate` took (the language server and the project model start afterwards, in the background). */
   activationMs: number;
@@ -70,7 +71,10 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
   const tasks = new CommerceTaskProvider(project);
   context.subscriptions.push(tasks);
   registerBuildCommands(context, project, tasks, log);
-  registerJavaOffer(context, project);
+  const javaHint = new JavaHint(context, project, log);
+  javaHint.setViewHint = (visible) => projectTree.setJavaHint(visible);
+  context.subscriptions.push(javaHint);
+  javaHint.evaluate();
   const mcp = new McpProvider(context, project, manager, log);
   context.subscriptions.push(mcp);
 
@@ -99,6 +103,7 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
         mcp,
         ccv2,
         connectionsPanel,
+        javaHint,
         sideBar,
         activationMs,
         readSecret: (connection) => context.secrets.get(ConnectionManager.secretKey(connection)),
