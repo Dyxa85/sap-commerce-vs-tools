@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 import { createMockHac, type MockHacServer } from '@sapcommerce-vstools/mock-hac';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../src/connections/manager';
-import { getApi, openText, setConnections, stubWindow } from './helpers';
+import { getApi, openText, setConnections, settleSecret, stubWindow } from './helpers';
 
 const PASSWORD = 'mock-pass';
 let server: MockHacServer;
@@ -15,17 +15,8 @@ async function configure(extra: Record<string, unknown> = {}, name = 'Mock'): Pr
   const connection = api.manager.list()[0];
   assert.ok(connection, 'connection should be configured');
   await api.manager.storePassword(connection, PASSWORD);
+  await settleSecret(api, connection, PASSWORD);
   await api.manager.setActive(connection.id);
-}
-
-async function eventually<T>(check: () => Promise<T | undefined>, timeoutMs = 3000): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    const value = await check();
-    if (value !== undefined) return value;
-    if (Date.now() > deadline) throw new Error('timed out');
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
 }
 
 before(async () => {
@@ -229,17 +220,8 @@ describe('credentials', () => {
     const connection = api.manager.list()[0];
     assert.ok(connection);
     await api.manager.storePassword(connection, 'outdated-password');
-    // the secret storage must hand back what was just stored, and no authenticated client may be left over
-    const state = await eventually(async () =>
-      (await api.readSecret(connection)) === 'outdated-password' &&
-      !api.manager.hasCachedClient(connection.id)
-        ? 'ready'
-        : undefined,
-    ).catch(
-      async () =>
-        `secret=${await api.readSecret(connection)}, cached=${api.manager.hasCachedClient(connection.id)}`,
-    );
-    assert.equal(state, 'ready', `precondition not met: ${state}`);
+    await settleSecret(api, connection, 'outdated-password');
+    assert.equal(api.manager.hasCachedClient(connection.id), false);
 
     let prompts = 0;
     const restore = stubWindow('showInputBox', async () => {

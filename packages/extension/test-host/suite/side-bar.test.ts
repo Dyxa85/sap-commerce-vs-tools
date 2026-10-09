@@ -2,7 +2,7 @@ import * as assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
 import * as vscode from 'vscode';
 import { createMockHac, type MockHacServer } from '@sapcommerce-vstools/mock-hac';
-import { getApi, setConnections, stubWindow } from './helpers';
+import { getApi, setConnections, settleSecret, stubWindow } from './helpers';
 
 let server: MockHacServer;
 let url: string;
@@ -84,6 +84,7 @@ describe('connections page', () => {
       username: 'mock-user',
       password: 'mock-pass',
     });
+    await settleSecret(api, api.manager.list()[0]!, 'mock-pass');
     const id = api.manager.list()[0]!.id;
     await api.connectionsPanel.handle({ type: 'test', id });
     const ok = results(api.connectionsPanel.sentMessages).at(-1)!;
@@ -98,6 +99,7 @@ describe('connections page', () => {
       username: 'mock-user',
       password: 'wrong',
     });
+    await settleSecret(api, api.manager.list()[0]!, 'wrong');
     const restore = stubWindow('showInputBox', async () => undefined);
     try {
       await api.connectionsPanel.handle({ type: 'test', id });

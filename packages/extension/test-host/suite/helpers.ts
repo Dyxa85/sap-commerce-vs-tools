@@ -43,3 +43,27 @@ export function stubWindow<K extends keyof typeof vscode.window>(name: K, impl: 
     target[name as string] = original;
   };
 }
+
+/**
+ * Waits until the secret storage keeps returning `expected` for a connection. Two `store` calls for the same key a few
+ * milliseconds apart can be applied in the wrong order by VS Code (seen in CI on Windows: the older value won), so a
+ * single read is not proof that the value has settled.
+ */
+export async function settleSecret(
+  api: TestApi,
+  connection: Parameters<TestApi['readSecret']>[0],
+  expected: string,
+  timeoutMs = 5000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let stable = 0;
+  while (stable < 5) {
+    stable = (await api.readSecret(connection)) === expected ? stable + 1 : 0;
+    if (Date.now() > deadline) {
+      throw new Error(
+        `the secret storage did not settle on the stored password\n${api.manager.trace?.join('\n')}`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 80));
+  }
+}
