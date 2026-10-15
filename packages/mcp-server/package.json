@@ -14,7 +14,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
     "@sapcommerce-vstools/core": "workspace:*",
-    "zod": "^3.25.0"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@sapcommerce-vstools/mock-hac": "workspace:*"
