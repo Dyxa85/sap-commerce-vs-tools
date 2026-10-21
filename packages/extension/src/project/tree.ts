@@ -9,11 +9,13 @@ import {
   type FileKind,
   type PlatformProject,
 } from '@sapcommerce-vstools/core';
+import type { Ccv2Node, Ccv2Tree } from '../ccv2/tree.js';
 import { listFolder, parseHidden, roleOf } from './folders.js';
 import type { ProjectService } from './service.js';
 
 export type Node =
   | { kind: 'javaHint' }
+  | { kind: 'ccv2'; node: Ccv2Node }
   | { kind: 'project'; project: PlatformProject }
   | { kind: 'config'; project: PlatformProject }
   | {
@@ -28,6 +30,18 @@ export type Node =
   | { kind: 'overview'; project: PlatformProject; info: ExtensionInfo }
   | { kind: 'file'; path: string; label: string }
   | { kind: 'requires'; project: PlatformProject; info: ExtensionInfo };
+
+let iconBase: vscode.Uri | undefined;
+
+/** Where the extension's own tree icons are (`images/tree`). */
+export function setIconBase(extensionUri: vscode.Uri): void {
+  iconBase = vscode.Uri.joinPath(extensionUri, 'images', 'tree');
+}
+
+/** One of the extension's own icons, or the built-in `fallback` when they are not available. */
+export function treeIcon(name: string, fallback: string): vscode.Uri | vscode.ThemeIcon {
+  return iconBase ? vscode.Uri.joinPath(iconBase, `${name}.svg`) : new vscode.ThemeIcon(fallback);
+}
 
 const GROUP_LABELS: Record<ExtensionCategory, string> = {
   custom: 'Custom',
@@ -81,11 +95,17 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
   private watchers: vscode.Disposable[] = [];
   private timer: NodeJS.Timeout | undefined;
 
-  constructor(private readonly service: ProjectService) {
+  private readonly ccv2Subscription: vscode.Disposable | undefined;
+
+  constructor(
+    private readonly service: ProjectService,
+    private readonly ccv2?: { tree: Ccv2Tree },
+  ) {
     this.subscription = service.onDidChange(() => {
       this.emitter.fire(undefined);
       this.watch();
     });
+    this.ccv2Subscription = ccv2?.tree.onDidChangeTreeData(() => this.emitter.fire(undefined));
     this.watch();
   }
 
@@ -145,6 +165,14 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
 
   getTreeItem(node: Node): vscode.TreeItem {
     switch (node.kind) {
+      case 'ccv2': {
+        const item = (this.ccv2 as NonNullable<typeof this.ccv2>).tree.getTreeItem(node.node);
+        if (node.node.kind === 'repo' || node.node.kind === 'core')
+          item.iconPath = treeIcon('ccv2', 'cloud');
+        else if (node.node.kind === 'hybris')
+          item.iconPath = treeIcon('hybris', 'server-environment');
+        return item;
+      }
       case 'javaHint': {
         const item = new vscode.TreeItem(
           'Java is not set up – click to configure',
@@ -167,7 +195,7 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
           vscode.TreeItemCollapsibleState.Expanded,
         );
         item.description = `${node.project.loaded.length} extensions loaded`;
-        item.iconPath = new vscode.ThemeIcon('server-environment');
+        item.iconPath = treeIcon('project', 'server-environment');
         item.tooltip = node.project.hybrisDir;
         item.contextValue = 'sapcommerce.project';
         const errors = node.project.problems.filter((p) => p.severity === 'error').length;
@@ -179,7 +207,7 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
           'Configuration',
           vscode.TreeItemCollapsibleState.Collapsed,
         );
-        item.iconPath = new vscode.ThemeIcon('gear');
+        item.iconPath = treeIcon('config', 'gear');
         item.tooltip = node.project.configDir;
         return item;
       }
@@ -191,7 +219,8 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
             : vscode.TreeItemCollapsibleState.Collapsed,
         );
         item.description = String(node.extensions.length);
-        item.iconPath = new vscode.ThemeIcon(
+        item.iconPath = treeIcon(
+          node.category === 'other' ? 'modules' : node.category,
           node.category === 'custom' ? 'folder-active' : 'folder',
         );
         return item;
@@ -255,9 +284,22 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
         kind: 'project' as const,
         project,
       }));
-      return this.javaHint ? [{ kind: 'javaHint' as const }, ...projects] : projects;
+      // the CCv2 repository first, as the IDE shows it, then the platform project
+      const repositories = this.ccv2 ? await this.ccv2.tree.getChildren(undefined) : [];
+      const top: Node[] = [
+        ...repositories.map((inner) => ({ kind: 'ccv2' as const, node: inner })),
+        ...projects,
+      ];
+      return this.javaHint ? [{ kind: 'javaHint' as const }, ...top] : top;
     }
     switch (node.kind) {
+      case 'ccv2':
+        return this.ccv2
+          ? (await this.ccv2.tree.getChildren(node.node)).map((inner) => ({
+              kind: 'ccv2' as const,
+              node: inner,
+            }))
+          : [];
       case 'project': {
         const extensions = this.visibleExtensions(node.project);
         const groups = GROUP_ORDER.map((category) => ({
@@ -356,6 +398,7 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
     if (this.timer) clearTimeout(this.timer);
     for (const w of this.watchers) w.dispose();
     this.subscription.dispose();
+    this.ccv2Subscription?.dispose();
     this.emitter.dispose();
   }
 }

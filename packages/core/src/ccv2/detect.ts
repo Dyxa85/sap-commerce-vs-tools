@@ -1,5 +1,5 @@
 import { readdir, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 /** A directory the CCv2 view is built for. */
 export interface Ccv2Root {
@@ -30,6 +30,18 @@ export async function isCoreCustomize(dir: string): Promise<boolean> {
   return (await isFile(join(dir, 'manifest.json'))) && (await isDir(join(dir, 'hybris')));
 }
 
+/** The `core-customize` folder that contains `dir`, at most four levels up (`hybris/bin/custom/<extension>`). */
+async function enclosingCoreCustomize(dir: string): Promise<string | undefined> {
+  let current = dir;
+  for (let i = 0; i < 4; i++) {
+    const parent = dirname(current);
+    if (parent === current) return undefined;
+    current = parent;
+    if (await isCoreCustomize(current)) return current;
+  }
+  return undefined;
+}
+
 /**
  * Finds CCv2 projects for the opened folders: the folder is `core-customize`, contains it, or one of its direct
  * sub-folders does (a workspace that holds several repositories).
@@ -37,6 +49,12 @@ export async function isCoreCustomize(dir: string): Promise<boolean> {
 export async function findCcv2Roots(folders: readonly string[]): Promise<Ccv2Root[]> {
   const roots = new Map<string, Ccv2Root>();
   for (const folder of folders) {
+    // the opened folder may be inside `core-customize` (the `hybris` folder, an extension, …)
+    const inside = await enclosingCoreCustomize(folder);
+    if (inside) {
+      roots.set(dirname(inside), { dir: dirname(inside), coreCustomize: inside });
+      continue;
+    }
     if (await isCoreCustomize(folder)) {
       roots.set(folder, { dir: folder, coreCustomize: folder });
       continue;
@@ -62,5 +80,9 @@ export async function findCcv2Roots(folders: readonly string[]): Promise<Ccv2Roo
       }
     }
   }
-  return [...roots.values()];
+  // the same core-customize can be reached from several folders; the first (the opened folder itself) wins
+  const seen = new Set<string>();
+  return [...roots.values()].filter(
+    (r) => !seen.has(r.coreCustomize) && !!seen.add(r.coreCustomize),
+  );
 }

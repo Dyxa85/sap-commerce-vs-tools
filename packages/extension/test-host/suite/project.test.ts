@@ -35,8 +35,13 @@ describe('project model and Commerce Project view', () => {
   it('shows projects, groups, extensions and their files in the tree', async () => {
     const api = await getApi();
     await api.project.refresh();
-    const roots = (await api.projectTree.getChildren()) as Node[];
-    assert.equal(roots.length, 1);
+    const top = (await api.projectTree.getChildren()) as Node[];
+    // the CCv2 repository comes first, as in the IDE, then the platform project
+    assert.deepEqual(
+      top.map((n) => n.kind),
+      ['ccv2', 'project'],
+    );
+    const roots = top.filter((n) => n.kind === 'project');
     const children = (await api.projectTree.getChildren(roots[0])) as Node[];
     assert.ok(children.some((n) => n.kind === 'config'));
     const custom = children.find((n) => n.kind === 'group' && n.category === 'custom');

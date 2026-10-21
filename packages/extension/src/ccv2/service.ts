@@ -8,6 +8,8 @@ export class Ccv2Service implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private timer: NodeJS.Timeout | undefined;
   roots: ccv2.Ccv2Root[] = [];
+  /** More places to look from, e.g. the `hybris` folders of the projects that were found. */
+  extraFolders: () => string[] = () => [];
   readonly onDidChange = this.emitter.event;
 
   constructor(private readonly log: Logger) {
@@ -26,7 +28,10 @@ export class Ccv2Service implements vscode.Disposable {
   }
 
   async refresh(): Promise<void> {
-    const folders = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
+    const folders = [
+      ...(vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath),
+      ...this.extraFolders(),
+    ];
     try {
       this.roots = await ccv2.findCcv2Roots(folders);
     } catch (err) {

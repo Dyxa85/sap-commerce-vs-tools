@@ -143,6 +143,21 @@ describe('findCcv2Roots', () => {
       join(base, 'many', 'one'),
       join(base, 'many', 'two'),
     ]);
+    // opened inside core-customize: the hybris folder or one of its extensions
+    const expected = [
+      { dir: join(base, 'repo'), coreCustomize: join(base, 'repo', 'core-customize') },
+    ];
+    mkdirSync(join(base, 'repo', 'core-customize', 'hybris', 'bin', 'custom', 'ext'), {
+      recursive: true,
+    });
+    expect(await ccv2.findCcv2Roots([join(base, 'repo', 'core-customize', 'hybris')])).toEqual(
+      expected,
+    );
+    expect(
+      await ccv2.findCcv2Roots([
+        join(base, 'repo', 'core-customize', 'hybris', 'bin', 'custom', 'ext'),
+      ]),
+    ).toEqual(expected);
     expect(await ccv2.findCcv2Roots([join(base, 'plain')])).toEqual([]);
     expect(await ccv2.findCcv2Roots([join(base, 'missing')])).toEqual([]);
   });

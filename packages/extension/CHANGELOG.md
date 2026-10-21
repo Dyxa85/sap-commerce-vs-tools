@@ -5,6 +5,20 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-21
+
+### Added
+
+- **Icons for the main entries of the Commerce Project view** (own drawings, readable in light and dark themes): the project
+  (hexagon), Configuration, Custom, Modules, Platform and the CCv2 repository.
+- **The CCv2 repository is shown at the top of the Commerce Project view**, as the IDE does: `core-customize` with its
+  files, an outline of `manifest.json`, and `hybris` with `config` and `bin/custom`. The separate CCv2 view stays.
+
+### Fixed
+
+- **The CCv2 view was empty when the opened folder is inside `core-customize`** (for example the `hybris` folder): the
+  repository is now also found from the folders above it and from the `hybris` folder of every project found.
+
 ## [0.1.4] - 2026-10-09
 
 ### Changed

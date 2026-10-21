@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import { dependents, type ExtensionInfo } from '@sapcommerce-vstools/core';
 import type { ProjectService } from './service.js';
-import { ProjectTree, type Node } from './tree.js';
+import type { Ccv2Tree } from '../ccv2/tree.js';
+import { ProjectTree, setIconBase, type Node } from './tree.js';
 
 export function registerProjectView(
   context: vscode.ExtensionContext,
   service: ProjectService,
+  ccv2?: { tree: Ccv2Tree },
 ): ProjectTree {
-  const tree = new ProjectTree(service);
+  setIconBase(context.extensionUri);
+  const tree = new ProjectTree(service, ccv2);
   const view = vscode.window.createTreeView<Node>('sapcommerce.project', {
     treeDataProvider: tree,
     showCollapseAll: true,
@@ -59,8 +62,10 @@ export function registerProjectView(
     if (info) await vscode.env.clipboard.writeText(info.name);
   });
 
-  register('sapcommerce.project.revealInExplorer', async (node: Node) => {
-    const path = node?.kind === 'file' || node?.kind === 'dir' ? node.path : extensionOf(node)?.dir;
+  register('sapcommerce.project.revealInExplorer', async (given: Node) => {
+    const node = given?.kind === 'ccv2' ? given.node : given;
+    const path =
+      node?.kind === 'file' || node?.kind === 'dir' ? node.path : extensionOf(node as Node)?.dir;
     if (path) await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path));
   });
 

@@ -57,9 +57,12 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
   const typePanel = new TypePanel(languages);
   const diagramPanel = new DiagramPanel();
   context.subscriptions.push(log, manager, results, languages, project, typePanel, diagramPanel);
-  const projectTree = registerProjectView(context, project);
-  void project.refresh();
   const ccv2 = registerCcv2View(context, log);
+  const projectTree = registerProjectView(context, project, ccv2);
+  // CCv2 is also found when the opened folder is inside `core-customize`: look from every project's hybris folder
+  ccv2.service.extraFolders = () => project.projects.map((p) => p.hybrisDir);
+  context.subscriptions.push(project.onDidChange(() => void ccv2.service.refresh()));
+  void project.refresh();
 
   const connectionsPanel = new ConnectionsPanel(manager, log);
   context.subscriptions.push(connectionsPanel);
