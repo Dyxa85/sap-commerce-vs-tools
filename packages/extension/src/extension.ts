@@ -1,9 +1,11 @@
+import { sep } from 'node:path';
 import * as vscode from 'vscode';
 import { PRODUCT_NAME, SUPPORTED_COMMERCE_VERSIONS } from '@sapcommerce-vstools/core';
 import { registerActions } from './commands/actions.js';
 import { ConnectionsPanel } from './ui/connections-panel.js';
 import { registerSideBar, type SideBar } from './views/register.js';
 import { registerCcv2View, type Ccv2Parts } from './ccv2/commands.js';
+import { registerChangesView, type ChangesParts } from './changes/commands.js';
 import { CommerceTaskProvider } from './build/tasks.js';
 import { registerBuildCommands } from './commands/build.js';
 import { registerDiagramCommands } from './commands/diagrams.js';
@@ -36,6 +38,7 @@ export interface TestApi {
   tasks: CommerceTaskProvider;
   mcp: McpProvider;
   ccv2: Ccv2Parts;
+  changes: ChangesParts;
   connectionsPanel: ConnectionsPanel;
   javaHint: JavaHint;
   sideBar: SideBar;
@@ -58,7 +61,21 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
   const diagramPanel = new DiagramPanel();
   context.subscriptions.push(log, manager, results, languages, project, typePanel, diagramPanel);
   const ccv2 = registerCcv2View(context, log);
-  const projectTree = registerProjectView(context, project, ccv2);
+  const inside = (base: string, path: string): boolean =>
+    path === base || path.startsWith(base + sep);
+  // the CCv2 repository a project lives in (its root is shown in the project view, without core-customize)
+  const projectTree = registerProjectView(context, project, (p) =>
+    ccv2.service.roots.find((r) => inside(r.coreCustomize, p.hybrisDir)),
+  );
+  context.subscriptions.push(ccv2.service.onDidChange(() => projectTree.refresh()));
+  const changes = registerChangesView(context, log);
+  // a repository gets the icon of the project it holds
+  changes.tree.classify = (root) =>
+    project.projects.some((p) => inside(root, p.hybrisDir))
+      ? 'backend'
+      : project.frontends.some((f) => inside(root, f.dir))
+        ? 'frontend'
+        : undefined;
   // CCv2 is also found when the opened folder is inside `core-customize`: look from every project's hybris folder
   ccv2.service.extraFolders = () => project.projects.map((p) => p.hybrisDir);
   context.subscriptions.push(project.onDidChange(() => void ccv2.service.refresh()));
@@ -105,6 +122,7 @@ export function activate(context: vscode.ExtensionContext): TestApi | undefined 
         tasks,
         mcp,
         ccv2,
+        changes,
         connectionsPanel,
         javaHint,
         sideBar,

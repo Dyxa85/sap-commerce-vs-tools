@@ -25,9 +25,11 @@ async function main(): Promise<void> {
       homedir(),
       '.vscode',
       'extensions',
-      readdirSync(join(homedir(), '.vscode', 'extensions')).find((n) =>
-        n.startsWith('redhat.java-'),
-      ) ?? '',
+      // the newest installed version, as VS Code itself would run it
+      readdirSync(join(homedir(), '.vscode', 'extensions'))
+        .filter((n) => n.startsWith('redhat.java-'))
+        .sort((x, y) => x.localeCompare(y, undefined, { numeric: true }))
+        .at(-1) ?? '',
     );
   if (!existsSync(join(extensions, 'redhat.java')))
     cpSync(source, join(extensions, 'redhat.java'), { recursive: true });
@@ -45,6 +47,9 @@ async function main(): Promise<void> {
         : { 'java.jdt.ls.vmargs': process.env.LAB_VMARGS ?? '-XX:+UseParallelGC -Xmx4G -Xms512m' }),
       'telemetry.telemetryLevel': 'off',
       'update.mode': 'none',
+      // an update of the copied Java extension would restart the extension host in the middle of a run
+      'extensions.autoUpdate': false,
+      'extensions.autoCheckUpdates': false,
     }),
   );
   if (process.env.LAB_SETTINGS) {

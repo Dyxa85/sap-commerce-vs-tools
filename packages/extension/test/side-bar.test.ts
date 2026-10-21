@@ -67,8 +67,9 @@ describe('side bar contributions', () => {
     expect(views).toEqual([
       'sapcommerce.connections',
       'sapcommerce.actions',
-      'sapcommerce.project',
       'sapcommerce.ccv2',
+      'sapcommerce.changes',
+      'sapcommerce.project',
     ]);
   });
 

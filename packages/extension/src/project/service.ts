@@ -1,6 +1,12 @@
 import { isAbsolute, join } from 'node:path';
 import * as vscode from 'vscode';
-import { findHybrisDirs, loadPlatform, type PlatformProject } from '@sapcommerce-vstools/core';
+import {
+  findFrontendProjects,
+  findHybrisDirs,
+  loadPlatform,
+  type FrontendProject,
+  type PlatformProject,
+} from '@sapcommerce-vstools/core';
 import type { Logger } from '../util/log.js';
 
 /**
@@ -15,11 +21,13 @@ export class ProjectService implements vscode.Disposable {
   private readonly diagnostics = vscode.languages.createDiagnosticCollection('sapcommerce-project');
 
   projects: PlatformProject[] = [];
+  /** JavaScript projects (storefronts and the like) below the opened folders. */
+  frontends: FrontendProject[] = [];
   readonly onDidChange = this.emitter.event;
 
   constructor(private readonly log: Logger) {
     const schedule = (): void => this.scheduleRefresh();
-    for (const pattern of ['**/localextensions.xml', '**/extensioninfo.xml']) {
+    for (const pattern of ['**/localextensions.xml', '**/extensioninfo.xml', '**/package.json']) {
       const watcher = vscode.workspace.createFileSystemWatcher(pattern);
       this.disposables.push(
         watcher,
@@ -74,6 +82,9 @@ export class ProjectService implements vscode.Disposable {
     try {
       const roots = await this.roots();
       this.projects = await Promise.all(roots.map((root) => loadPlatform(root)));
+      this.frontends = await findFrontendProjects(
+        (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath),
+      );
       await vscode.commands.executeCommand(
         'setContext',
         'sapcommerce.hasProject',
@@ -87,6 +98,7 @@ export class ProjectService implements vscode.Disposable {
     } catch (err) {
       this.log.error('Loading the project model failed', err);
       this.projects = [];
+      this.frontends = [];
     }
     this.emitter.fire();
   }

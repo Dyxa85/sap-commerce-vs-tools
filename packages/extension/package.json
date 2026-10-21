@@ -2,7 +2,7 @@
   "name": "sap-commerce-vs-tools",
   "displayName": "SAP Commerce VS-Tools",
   "description": "Developer tools for SAP Commerce: hAC integration (FlexibleSearch, SQL, Groovy, ImpEx), language support and project navigation. Unofficial, not affiliated with SAP.",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "dyxa85",
   "license": "Apache-2.0",
   "repository": {
@@ -262,6 +262,17 @@
         "title": "Refresh CCv2 View",
         "category": "SAP Commerce",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "sapcommerce.changes.refresh",
+        "title": "Refresh Changes View",
+        "category": "SAP Commerce",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sapcommerce.changes.open",
+        "title": "Open Change",
+        "category": "SAP Commerce"
       },
       {
         "command": "sapcommerce.ccv2.reveal",
@@ -583,6 +594,12 @@
           "scope": "window",
           "description": "Where the Java extension gets the classes of platform and modules from."
         },
+        "sapcommerce.java.manageServer": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "When configuring Java also set the JDK the platform requires, a memory limit for the Java server and switch off Gradle/Maven import. Turn off to manage java.jdt.ls.vmargs and java.configuration.runtimes yourself."
+        },
         "sapcommerce.java.includeTests": {
           "type": "boolean",
           "default": true,
@@ -611,6 +628,12 @@
           "scope": "machine",
           "markdownDescription": "Let the bundled MCP server run **read-only** FlexibleSearch/SQL queries against the active connection. VS Code asks for confirmation every time the server starts. Results are visible to the AI model."
         },
+        "sapcommerce.project.autoReveal": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Select the file of the active editor in the Commerce Project view, like the Explorer does."
+        },
         "sapcommerce.project.hiddenEntries": {
           "type": "array",
           "items": {
@@ -624,7 +647,10 @@
             "classes",
             "eclipsebin",
             ".DS_Store",
-            "/bin"
+            "/bin",
+            ".angular",
+            "dist",
+            "coverage"
           ],
           "scope": "window",
           "markdownDescription": "Files and folders that the *Commerce Project* view does not show inside extensions. A plain name (`classes`) hides it at any depth, a leading slash (`/bin`) only the top-level entry of an extension."
@@ -778,6 +804,11 @@
           "group": "navigation@1"
         },
         {
+          "command": "sapcommerce.changes.refresh",
+          "when": "view == sapcommerce.changes",
+          "group": "navigation@1"
+        },
+        {
           "command": "sapcommerce.connection.add",
           "when": "view == sapcommerce.connections",
           "group": "navigation@1"
@@ -888,6 +919,10 @@
           "when": "sapcommerce.hasCcv2"
         },
         {
+          "command": "sapcommerce.changes.open",
+          "when": "false"
+        },
+        {
           "command": "sapcommerce.connection.activate",
           "when": "false"
         },
@@ -929,14 +964,19 @@
           "icon": "$(list-flat)"
         },
         {
-          "id": "sapcommerce.project",
-          "name": "Commerce Project",
-          "icon": "$(server-environment)"
-        },
-        {
           "id": "sapcommerce.ccv2",
           "name": "CCv2",
           "icon": "$(cloud)"
+        },
+        {
+          "id": "sapcommerce.changes",
+          "name": "Changes",
+          "icon": "$(git-pull-request)"
+        },
+        {
+          "id": "sapcommerce.project",
+          "name": "Commerce Project",
+          "icon": "$(server-environment)"
         }
       ]
     },
@@ -1019,7 +1059,7 @@
       },
       {
         "view": "sapcommerce.project",
-        "contents": "No SAP Commerce project found in this folder.\nOpen the folder that contains the `hybris` directory, or tell the extension where it is.\n[Open Folder](command:workbench.action.files.openFolder)\n[Set Project Path](command:workbench.action.openSettings?%5B%22sapcommerce.project.roots%22%5D)"
+        "contents": "No SAP Commerce or JavaScript project found in this folder.\nOpen a folder that contains the `hybris` directory (or the folder above several projects), or tell the extension where it is.\n[Open Folder](command:workbench.action.files.openFolder)\n[Set Project Path](command:workbench.action.openSettings?%5B%22sapcommerce.project.roots%22%5D)"
       },
       {
         "view": "sapcommerce.ccv2",

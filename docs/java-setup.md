@@ -91,6 +91,31 @@ Generated model classes (`bootstrap/gensrc`, extension `gensrc`) exist only afte
 Extensions that are **not** in `localextensions.xml` are not part of the project, so their classes stay unresolved by
 design (the platform does not load them either).
 
+### Memory, JDK, tests and the other Java extensions
+
+_Configure Java_ also writes four things that are not about the project (switch off with `sapcommerce.java.manageServer`):
+
+- **Memory.** The Java server's default collector (`ParallelGC`) fills the whole allowed heap with garbage before it
+  collects, and never gives it back: with `-Xmx4G` the process grows towards 4 GB although a full collection leaves about
+  350 MB of live objects (heap histogram of a running server on a 234-extension project). The setup therefore writes
+  `java.jdt.ls.vmargs` with `-XX:+UseG1GC -Xmx1536m` and periodic collections that return unused heap
+  (`-XX:G1PeriodicGCInterval`, `-XX:MaxHeapFreeRatio=30`). In `sources` mode the limit is 4 GB.
+- **The JDK of the platform.** The Ant build insists on one Java version (`required_java_version` in
+  `platform/resources/ant/util.xml`, 21 for 2211-jdk21). Without a configured runtime the Java extension uses the JDK it ships
+  (25 in version 1.58) for the project **and for test runs**, so the code is analysed and the tests run on a newer Java than
+  the platform runs on. The setup finds the JDK of the required version (`JAVA_HOME`, the usual install folders, SDKMAN) and
+  writes it to `java.configuration.runtimes`. If none is found it is only logged.
+- **No Gradle/Maven import** (`java.import.gradle.enabled`, `java.import.maven.enabled`). The project is described by the
+  settings above; a `build.gradle` somewhere in a CCv2 repository would otherwise make the Java server start Gradle daemons,
+  more JVMs of the same JRE.
+- **Quiet tests**: `java.test.config` with `-XX:+EnableDynamicAgentLoading -Xshare:off` silences the Mockito/Byte Buddy
+  warnings ("self-attaching", "Sharing is only supported for boot loader classes") that newer JDKs print.
+
+**Other Java extensions** (the _Extension Pack for Java_): _Language Support for Java_ does the work, _Debugger_ and _Test
+Runner_ use its project (they work with the setup above). _Maven for Java_ and _Gradle for Java_ only matter if a `pom.xml` or
+`build.gradle` is found; they are not needed for SAP Commerce (Ant) and can be disabled for the workspace. Each VS Code window
+with a Java project starts its own server, so two windows are two JVMs.
+
 ### How it was verified
 
 Against a real SAP Commerce 2211-jdk21 CCv2 project (234 loaded extensions) with the real Red Hat Java extension 1.56,

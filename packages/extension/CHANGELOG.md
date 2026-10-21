@@ -5,6 +5,32 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-21
+
+### Changed
+
+- **Commerce Project shows all projects of the opened folder**: the SAP Commerce backend and every JavaScript project
+  (a folder with a `package.json`, e.g. an Angular storefront) – open one folder above them and the extension finds them by
+  itself. Each is named after its folder and has its own icon.
+- **Backend tree**: _Configuration_ now is the folder `hybris/config` as it is on disk (it listed only `*.xml` and
+  `*.properties` files before), and a new _Root_ entry mirrors the repository folder without `core-customize`.
+- **Git changes instead of problem colours.** Extensions were all yellow (warnings) or red (errors); the tree now
+  colours only changed files and the folders and extensions that contain them, with the Git extension's colours and badges.
+- **The file in the editor is selected in the tree** like the Explorer does (`sapcommerce.project.autoReveal`).
+- **CCv2 moved out of Commerce Project** and is cleaned up: it shows the outline of `manifest.json` only. The views are
+  now Connections, Features, CCv2, **Changes**, Commerce Project.
+- New view **Changes**: all files Git reports as changed, per repository under the folder name of the project.
+- New icons for the backend, frontend and _Root_; `dist`, `coverage` and `.angular` are hidden in the tree by default.
+
+### Changed
+
+- **Java: less memory, the right JDK.** _Configure Java_ now also writes the settings that decide how much a Java server
+  keeps: `java.jdt.ls.vmargs` with the G1 collector, a 1.5 GB limit and heap that is given back (the default collector grew
+  to the allowed maximum, 4 GB in a setup with `-Xmx4G`, while about 350 MB were live). It sets the JDK the platform requires
+  (`required_java_version`, 21 for 2211-jdk21) as the project's runtime, so analysis and **test runs** no longer use the
+  newer JDK bundled with the Java extension; turns off Gradle/Maven import; and silences the Mockito/Byte Buddy warnings in
+  test runs. Opt out with `sapcommerce.java.manageServer`. Run _Configure Java_ again to apply it.
+
 ## [0.1.5] - 2026-10-21
 
 ### Added

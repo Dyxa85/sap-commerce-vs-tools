@@ -76,9 +76,15 @@ version appears. If the command is missing, reload the window (**Developer: Relo
    (relative to the first workspace folder, or absolute). **SAP Commerce: Show Index Information** reports how many
    extensions, item types and beans were indexed.
 
-If the folder is a **CCv2 repository** (it contains `core-customize/manifest.json`), a second view **CCv2** appears:
-the repository structure (`core-customize`, `js-storefront`, …) and an outline of `manifest.json` – click an entry to jump
-to it in the file. Platform and extensions stay in **Commerce Project**.
+You can open **one folder that holds several projects** (for example a folder with the backend repository and a storefront
+repository): the extension finds the SAP Commerce project and every JavaScript project (a folder with a `package.json`)
+below it by itself and shows each in **Commerce Project** under its folder name, with its own icon.
+
+The side bar has two more views. **CCv2** (for a CCv2 repository, it contains `core-customize/manifest.json`) shows the outline
+of `manifest.json` – click an entry to jump to it in the file. **Changes** lists the files Git reports as changed, per
+repository; in **Commerce Project** the changed files and the folders and extensions that contain them are coloured like in
+the Explorer. The file you are editing is selected in **Commerce Project** (switch off with
+`sapcommerce.project.autoReveal`).
 
 The editor features (ImpEx, FlexibleSearch, items/beans/Spring/process XML, diagrams) now work – no connection required.
 

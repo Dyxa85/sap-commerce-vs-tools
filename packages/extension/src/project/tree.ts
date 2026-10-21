@@ -1,5 +1,4 @@
-import { readdir } from 'node:fs/promises';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, relative, sep } from 'node:path';
 import * as vscode from 'vscode';
 import {
   listExtensionFiles,
@@ -7,41 +6,66 @@ import {
   type ExtensionFile,
   type ExtensionInfo,
   type FileKind,
+  type FrontendProject,
   type PlatformProject,
+  type ccv2,
 } from '@sapcommerce-vstools/core';
-import type { Ccv2Node, Ccv2Tree } from '../ccv2/tree.js';
+import { treeUri } from '../changes/service.js';
+import { treeIcon } from '../util/icons.js';
 import { listFolder, parseHidden, roleOf } from './folders.js';
 import type { ProjectService } from './service.js';
 
-export type Node =
-  | { kind: 'javaHint' }
-  | { kind: 'ccv2'; node: Ccv2Node }
-  | { kind: 'project'; project: PlatformProject }
-  | { kind: 'config'; project: PlatformProject }
-  | {
-      kind: 'group';
-      project: PlatformProject;
-      category: ExtensionCategory;
-      extensions: ExtensionInfo[];
-    }
-  | { kind: 'extension'; project: PlatformProject; info: ExtensionInfo }
-  | { kind: 'fileGroup'; info: ExtensionInfo; fileKind: FileKind; files: ExtensionFile[] }
-  | { kind: 'dir'; path: string; label: string; root: string }
-  | { kind: 'overview'; project: PlatformProject; info: ExtensionInfo }
-  | { kind: 'file'; path: string; label: string }
-  | { kind: 'requires'; project: PlatformProject; info: ExtensionInfo };
+type Link = { id?: string; parent?: Node };
 
-let iconBase: vscode.Uri | undefined;
+export type Node = Link &
+  (
+    | { kind: 'javaHint' }
+    | { kind: 'project'; project: PlatformProject }
+    | { kind: 'frontend'; project: FrontendProject }
+    | { kind: 'config'; project: PlatformProject }
+    | { kind: 'repoRoot'; root: ccv2.Ccv2Root }
+    | {
+        kind: 'group';
+        project: PlatformProject;
+        category: ExtensionCategory;
+        extensions: ExtensionInfo[];
+      }
+    | { kind: 'extension'; project: PlatformProject; info: ExtensionInfo }
+    | { kind: 'fileGroup'; info: ExtensionInfo; fileKind: FileKind; files: ExtensionFile[] }
+    | { kind: 'dir'; path: string; label: string; root: string }
+    | { kind: 'overview'; project: PlatformProject; info: ExtensionInfo }
+    | { kind: 'file'; path: string; label: string }
+    | { kind: 'requires'; project: PlatformProject; info: ExtensionInfo }
+  );
 
-/** Where the extension's own tree icons are (`images/tree`). */
-export function setIconBase(extensionUri: vscode.Uri): void {
-  iconBase = vscode.Uri.joinPath(extensionUri, 'images', 'tree');
+/** Identifies a node among its siblings; with the ids of its ancestors it is unique in the whole tree. */
+function keyOf(node: Node): string {
+  switch (node.kind) {
+    case 'javaHint':
+    case 'config':
+    case 'repoRoot':
+    case 'overview':
+    case 'requires':
+      return node.kind;
+    case 'project':
+      return `project:${node.project.hybrisDir}`;
+    case 'frontend':
+      return `frontend:${node.project.dir}`;
+    case 'group':
+      return `group:${node.category}`;
+    case 'extension':
+      return `ext:${node.info.name}`;
+    case 'fileGroup':
+      return `kind:${node.fileKind}`;
+    case 'dir':
+      return `dir:${node.path}`;
+    case 'file':
+      return `file:${node.path}|${node.label}`;
+  }
 }
 
-/** One of the extension's own icons, or the built-in `fallback` when they are not available. */
-export function treeIcon(name: string, fallback: string): vscode.Uri | vscode.ThemeIcon {
-  return iconBase ? vscode.Uri.joinPath(iconBase, `${name}.svg`) : new vscode.ThemeIcon(fallback);
-}
+const within = (base: string, path: string): boolean =>
+  path === base || path.startsWith(base + sep);
 
 const GROUP_LABELS: Record<ExtensionCategory, string> = {
   custom: 'Custom',
@@ -84,6 +108,10 @@ export const DEFAULT_HIDDEN = [
   'eclipsebin',
   '.DS_Store',
   '/bin',
+  // build output of JavaScript projects
+  '.angular',
+  'dist',
+  'coverage',
 ];
 
 export class ProjectTree implements vscode.TreeDataProvider<Node> {
@@ -95,23 +123,29 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
   private watchers: vscode.Disposable[] = [];
   private timer: NodeJS.Timeout | undefined;
 
-  private readonly ccv2Subscription: vscode.Disposable | undefined;
-
+  /**
+   * @param repositoryOf the CCv2 repository a project lives in, if it is one (its root is shown next to the extensions)
+   */
   constructor(
     private readonly service: ProjectService,
-    private readonly ccv2?: { tree: Ccv2Tree },
+    private readonly repositoryOf: (project: PlatformProject) => ccv2.Ccv2Root | undefined = () =>
+      undefined,
   ) {
     this.subscription = service.onDidChange(() => {
       this.emitter.fire(undefined);
       this.watch();
     });
-    this.ccv2Subscription = ccv2?.tree.onDidChangeTreeData(() => this.emitter.fire(undefined));
     this.watch();
   }
 
   /** The view this tree belongs to, so a message can be shown above it. */
   attach(view: vscode.TreeView<Node>): void {
     this.view = view;
+  }
+
+  /** Called when the CCv2 repositories were (re)detected. */
+  refresh(): void {
+    this.emitter.fire(undefined);
   }
 
   /** Shows or hides the entry at the top that leads to the Java setup. */
@@ -131,9 +165,13 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
       if (this.timer) clearTimeout(this.timer);
       this.timer = setTimeout(() => this.emitter.fire(undefined), 500);
     };
-    for (const project of this.service.projects) {
+    const dirs = [
+      ...this.service.projects.map((p) => p.hybrisDir),
+      ...this.service.frontends.map((f) => f.dir),
+    ];
+    for (const dir of dirs) {
       const watcher = vscode.workspace.createFileSystemWatcher(
-        new vscode.RelativePattern(project.hybrisDir, '**'),
+        new vscode.RelativePattern(dir, '**'),
         false,
         true,
         false,
@@ -164,15 +202,13 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
   // ------------------------------------------------------------ TreeDataProvider
 
   getTreeItem(node: Node): vscode.TreeItem {
+    const item = this.itemOf(node);
+    item.id = node.id;
+    return item;
+  }
+
+  private itemOf(node: Node): vscode.TreeItem {
     switch (node.kind) {
-      case 'ccv2': {
-        const item = (this.ccv2 as NonNullable<typeof this.ccv2>).tree.getTreeItem(node.node);
-        if (node.node.kind === 'repo' || node.node.kind === 'core')
-          item.iconPath = treeIcon('ccv2', 'cloud');
-        else if (node.node.kind === 'hybris')
-          item.iconPath = treeIcon('hybris', 'server-environment');
-        return item;
-      }
       case 'javaHint': {
         const item = new vscode.TreeItem(
           'Java is not set up – click to configure',
@@ -190,16 +226,38 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
         return item;
       }
       case 'project': {
+        const repository = this.repositoryOf(node.project);
         const item = new vscode.TreeItem(
-          projectLabel(node.project),
+          repository && repository.dir !== repository.coreCustomize
+            ? basename(repository.dir)
+            : projectLabel(node.project),
           vscode.TreeItemCollapsibleState.Expanded,
         );
-        item.description = `${node.project.loaded.length} extensions loaded`;
-        item.iconPath = treeIcon('project', 'server-environment');
+        item.description = [
+          repository && repository.dir !== repository.coreCustomize
+            ? posixRelative(repository.dir, node.project.hybrisDir)
+            : undefined,
+          `${node.project.loaded.length} extensions loaded`,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        item.iconPath = treeIcon('backend', 'server-environment');
         item.tooltip = node.project.hybrisDir;
         item.contextValue = 'sapcommerce.project';
         const errors = node.project.problems.filter((p) => p.severity === 'error').length;
         if (errors > 0) item.description += ` · ${errors} problem${errors === 1 ? '' : 's'}`;
+        return item;
+      }
+      case 'frontend': {
+        const item = new vscode.TreeItem(
+          node.project.name,
+          vscode.TreeItemCollapsibleState.Collapsed,
+        );
+        item.description = node.project.framework;
+        item.iconPath = treeIcon('frontend', 'browser');
+        item.tooltip = node.project.dir;
+        item.contextValue = 'sapcommerce.folder';
+        item.resourceUri = treeUri(node.project.dir);
         return item;
       }
       case 'config': {
@@ -207,8 +265,20 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
           'Configuration',
           vscode.TreeItemCollapsibleState.Collapsed,
         );
+        item.description = 'hybris/config';
         item.iconPath = treeIcon('config', 'gear');
         item.tooltip = node.project.configDir;
+        item.resourceUri = treeUri(node.project.configDir);
+        item.contextValue = 'sapcommerce.folder';
+        return item;
+      }
+      case 'repoRoot': {
+        const item = new vscode.TreeItem('Root', vscode.TreeItemCollapsibleState.Collapsed);
+        item.description = `${basename(node.root.dir)}, without core-customize`;
+        item.iconPath = treeIcon('root', 'root-folder');
+        item.tooltip = node.root.dir;
+        item.resourceUri = treeUri(node.root.dir);
+        item.contextValue = 'sapcommerce.folder';
         return item;
       }
       case 'group': {
@@ -244,7 +314,8 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
             (node.info.requires.length > 0 ? `\n\nRequires: ${node.info.requires.join(', ')}` : ''),
         );
         item.contextValue = 'sapcommerce.extension';
-        item.resourceUri = vscode.Uri.file(node.info.dir);
+        // Git changes colour the item; the problem markers of the files below it do not (they made every extension yellow)
+        item.resourceUri = treeUri(node.info.dir);
         return item;
       }
       case 'fileGroup': {
@@ -279,27 +350,24 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
   }
 
   async getChildren(node?: Node): Promise<Node[]> {
+    const children = await this.childrenOf(node);
+    // every node knows its parent (for `reveal`) and has an id that is unique in the whole tree
+    for (const child of children) {
+      child.parent = node;
+      child.id = `${node?.id ?? ''}/${keyOf(child)}`;
+    }
+    return children;
+  }
+
+  private async childrenOf(node?: Node): Promise<Node[]> {
     if (!node) {
-      const projects = this.service.projects.map((project) => ({
-        kind: 'project' as const,
-        project,
-      }));
-      // the CCv2 repository first, as the IDE shows it, then the platform project
-      const repositories = this.ccv2 ? await this.ccv2.tree.getChildren(undefined) : [];
       const top: Node[] = [
-        ...repositories.map((inner) => ({ kind: 'ccv2' as const, node: inner })),
-        ...projects,
+        ...this.service.projects.map((project) => ({ kind: 'project' as const, project })),
+        ...this.service.frontends.map((project) => ({ kind: 'frontend' as const, project })),
       ];
       return this.javaHint ? [{ kind: 'javaHint' as const }, ...top] : top;
     }
     switch (node.kind) {
-      case 'ccv2':
-        return this.ccv2
-          ? (await this.ccv2.tree.getChildren(node.node)).map((inner) => ({
-              kind: 'ccv2' as const,
-              node: inner,
-            }))
-          : [];
       case 'project': {
         const extensions = this.visibleExtensions(node.project);
         const groups = GROUP_ORDER.map((category) => ({
@@ -310,10 +378,21 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
             .filter((e) => e.category === category)
             .sort((a, b) => a.name.localeCompare(b.name)),
         })).filter((g) => g.extensions.length > 0);
-        return [{ kind: 'config', project: node.project }, ...groups];
+        const repository = this.repositoryOf(node.project);
+        const root: Node[] =
+          repository && repository.dir !== repository.coreCustomize
+            ? [{ kind: 'repoRoot', root: repository }]
+            : [];
+        return [{ kind: 'config', project: node.project }, ...groups, ...root];
       }
       case 'config':
-        return configFiles(node.project);
+        return this.folderNodes(node.project.configDir, node.project.configDir);
+      case 'frontend':
+        return this.folderNodes(node.project.dir, node.project.dir);
+      case 'repoRoot':
+        return (await this.folderNodes(node.root.dir, node.root.dir)).filter(
+          (n) => !(n.kind === 'dir' && within(node.root.coreCustomize, n.path)),
+        );
       case 'group':
         return node.extensions.map((info) => ({
           kind: 'extension' as const,
@@ -322,24 +401,13 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
         }));
       case 'extension': {
         // the real folder structure first, as in an IDE; the commerce-specific views sit below it
-        const entries = await listFolder(node.info.dir, node.info.dir, this.hiddenRules());
         return [
-          ...entries.map((e) =>
-            e.isDir
-              ? { kind: 'dir' as const, path: e.path, label: e.label, root: node.info.dir }
-              : { kind: 'file' as const, path: e.path, label: e.label },
-          ),
+          ...(await this.folderNodes(node.info.dir, node.info.dir)),
           { kind: 'overview' as const, project: node.project, info: node.info },
         ];
       }
-      case 'dir': {
-        const entries = await listFolder(node.path, node.root, this.hiddenRules());
-        return entries.map((e) =>
-          e.isDir
-            ? { kind: 'dir' as const, path: e.path, label: e.label, root: node.root }
-            : { kind: 'file' as const, path: e.path, label: e.label },
-        );
-      }
+      case 'dir':
+        return this.folderNodes(node.path, node.root);
       case 'overview': {
         const files = await listExtensionFiles(node.info);
         const kinds: FileKind[] = [
@@ -380,16 +448,56 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
     }
   }
 
+  private async folderNodes(dir: string, root: string): Promise<Node[]> {
+    const entries = await listFolder(dir, root, this.hiddenRules());
+    return entries.map((e) =>
+      e.isDir
+        ? { kind: 'dir' as const, path: e.path, label: e.label, root }
+        : { kind: 'file' as const, path: e.path, label: e.label },
+    );
+  }
+
   getParent(node: Node): Node | undefined {
-    if (node.kind === 'extension') {
-      return {
-        kind: 'group',
-        project: node.project,
-        category: node.info.category,
-        extensions: this.visibleExtensions(node.project).filter(
-          (e) => e.category === node.info.category,
-        ),
-      };
+    return node.parent;
+  }
+
+  /** Does the subtree of this node contain the file? Only nodes that stand for folders on disk can say yes. */
+  private covers(node: Node, path: string): boolean {
+    switch (node.kind) {
+      case 'project': {
+        const repository = this.repositoryOf(node.project);
+        return (
+          within(node.project.hybrisDir, path) ||
+          (repository !== undefined && within(repository.dir, path))
+        );
+      }
+      case 'frontend':
+        return within(node.project.dir, path);
+      case 'config':
+        return within(node.project.configDir, path);
+      case 'repoRoot':
+        return within(node.root.dir, path) && !within(node.root.coreCustomize, path);
+      case 'group':
+        return node.extensions.some((e) => within(e.dir, path));
+      case 'extension':
+        return within(node.info.dir, path);
+      case 'dir':
+        return within(node.path, path);
+      case 'file':
+        return node.path === path;
+      default:
+        return false;
+    }
+  }
+
+  /** The node that shows this file, found by walking down from the top; undefined if the tree does not show it. */
+  async nodeFor(path: string): Promise<Node | undefined> {
+    let level = await this.getChildren(undefined);
+    for (let depth = 0; depth < 64; depth++) {
+      const next = level.find((n) => this.covers(n, path));
+      if (!next) return undefined;
+      if (next.kind === 'file') return next;
+      level = await this.getChildren(next);
     }
     return undefined;
   }
@@ -398,31 +506,12 @@ export class ProjectTree implements vscode.TreeDataProvider<Node> {
     if (this.timer) clearTimeout(this.timer);
     for (const w of this.watchers) w.dispose();
     this.subscription.dispose();
-    this.ccv2Subscription?.dispose();
     this.emitter.dispose();
   }
 }
 
-async function configFiles(project: PlatformProject): Promise<Node[]> {
-  try {
-    const entries = await readdir(project.configDir, { withFileTypes: true });
-    return entries
-      .filter((e) => e.isFile() && /\.(xml|properties)$/.test(e.name))
-      .sort((a, b) =>
-        a.name === 'localextensions.xml'
-          ? -1
-          : b.name === 'localextensions.xml'
-            ? 1
-            : a.name.localeCompare(b.name),
-      )
-      .map((e) => ({
-        kind: 'file' as const,
-        path: join(project.configDir, e.name),
-        label: e.name,
-      }));
-  } catch {
-    return [];
-  }
+function posixRelative(from: string, to: string): string {
+  return relative(from, to).split(sep).join('/');
 }
 
 function projectLabel(project: PlatformProject): string {
@@ -432,7 +521,7 @@ function projectLabel(project: PlatformProject): string {
 /** A folder of an extension; the file icon theme draws it, well-known folders get a short description. */
 export function folderItem(path: string, label: string, root: string): vscode.TreeItem {
   const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed);
-  item.resourceUri = vscode.Uri.file(path);
+  item.resourceUri = treeUri(path);
   item.description = roleOf(root, path);
   item.tooltip = path;
   item.contextValue = 'sapcommerce.folder';
@@ -441,7 +530,7 @@ export function folderItem(path: string, label: string, root: string): vscode.Tr
 
 export function fileItem(path: string, label: string): vscode.TreeItem {
   const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
-  item.resourceUri = vscode.Uri.file(path);
+  item.resourceUri = treeUri(path);
   // jars and classes cannot be shown in an editor
   if (!/\.(jar|class|zip|gz|war|ear)$/i.test(path)) {
     item.command = { command: 'vscode.open', title: 'Open', arguments: [vscode.Uri.file(path)] };

@@ -6,3 +6,4 @@ export * from './localextensions.js';
 export * from './model.js';
 export * from './target-versions.js';
 export * from './graph.js';
+export * from './frontend.js';

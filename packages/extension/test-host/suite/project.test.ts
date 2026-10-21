@@ -36,14 +36,22 @@ describe('project model and Commerce Project view', () => {
     const api = await getApi();
     await api.project.refresh();
     const top = (await api.projectTree.getChildren()) as Node[];
-    // the CCv2 repository comes first, as in the IDE, then the platform project
+    // the backend project, then the JavaScript project found next to it
     assert.deepEqual(
       top.map((n) => n.kind),
-      ['ccv2', 'project'],
+      ['project', 'frontend'],
     );
+    const frontend = api.projectTree.getTreeItem(top[1]!);
+    assert.equal(frontend.label, 'js-storefront');
     const roots = top.filter((n) => n.kind === 'project');
     const children = (await api.projectTree.getChildren(roots[0])) as Node[];
-    assert.ok(children.some((n) => n.kind === 'config'));
+    const config = children.find((n) => n.kind === 'config')!;
+    assert.ok(config);
+    // the folder hybris/config as it is on disk
+    const configFiles = ((await api.projectTree.getChildren(config)) as Node[]).map((n) =>
+      String(api.projectTree.getTreeItem(n).label),
+    );
+    assert.ok(configFiles.includes('localextensions.xml'));
     const custom = children.find((n) => n.kind === 'group' && n.category === 'custom');
     assert.ok(custom && custom.kind === 'group');
     assert.deepEqual(
@@ -68,6 +76,27 @@ describe('project model and Commerce Project view', () => {
     assert.equal(label(packages[0]!), 'com/acme/core/service/impl');
     const classes = (await api.projectTree.getChildren(packages[0])) as Node[];
     assert.deepEqual(classes.map(label), ['DefaultAcmeBadgeService.java']);
+
+    // the file in the editor can be found in the tree: every node knows its parent, ids are unique
+    const file = join(
+      api.project.projects[0]!.loaded.find((e) => e.name === 'acmecore')!.dir,
+      'src/com/acme/core/service/impl/DefaultAcmeBadgeService.java',
+    );
+    const found = await api.projectTree.nodeFor(file);
+    assert.ok(found && found.kind === 'file', 'node for the open file');
+    const chain: string[] = [];
+    const ids = new Set<string>();
+    for (let n: Node | undefined = found; n; n = api.projectTree.getParent(n)) {
+      chain.unshift(String(api.projectTree.getTreeItem(n).label));
+      assert.ok(n.id && !ids.has(n.id), 'unique id');
+      ids.add(n.id);
+    }
+    assert.deepEqual(chain.slice(0, 3), [
+      String(api.projectTree.getTreeItem(roots[0]!).label),
+      'Custom',
+      'acmecore',
+    ]);
+    assert.equal(await api.projectTree.nodeFor(join(file, '..', 'does-not-exist.txt')), undefined);
 
     // the commerce-specific view stays available below
     const overview = content.find((n) => n.kind === 'overview')!;
@@ -199,19 +228,10 @@ describe('CCv2 view', () => {
 
     const roots = await tree.getChildren();
     assert.equal(roots.length, 1);
-    const children = await tree.getChildren(roots[0]);
-    assert.deepEqual(
-      children.map((n) => `${n.kind}:${label(n)}`),
-      [
-        'manifest:manifest.json',
-        'hybris:hybris',
-        'dir:js-storefront',
-        'file:.aiignore',
-        'file:README.md',
-      ],
-    );
+    assert.equal(tree.getTreeItem(roots[0]!).description, 'manifest.json');
 
-    const outline = await tree.getChildren(children[0]);
+    // the outline of manifest.json is the content of the repository node
+    const outline = await tree.getChildren(roots[0]);
     assert.deepEqual(outline.slice(0, 2).map(label), ['commerceSuiteVersion', 'solrVersion']);
     assert.equal(tree.getTreeItem(outline[0]!).description, '2211-jdk21.17');
     const extensions = outline.find((n) => label(n) === 'extensions')!;
@@ -220,18 +240,13 @@ describe('CCv2 view', () => {
       'acmefacades',
       'acmeprocess',
     ]);
-
-    // only what a project owns is listed under hybris
-    const hybris = await tree.getChildren(children[1]);
-    assert.deepEqual(hybris.map(label), ['config', 'bin/custom']);
   });
 
   it('opens manifest.json at the clicked entry', async () => {
     const api = await getApi();
     await api.ccv2.service.refresh();
     const roots = await api.ccv2.tree.getChildren();
-    const core = await api.ccv2.tree.getChildren(roots[0]);
-    const outline = await api.ccv2.tree.getChildren(core[0]);
+    const outline = await api.ccv2.tree.getChildren(roots[0]);
     const solr = outline.find((n) => String(api.ccv2.tree.getTreeItem(n).label) === 'solrVersion')!;
     const command = api.ccv2.tree.getTreeItem(solr).command!;
     await vscode.commands.executeCommand(command.command, ...(command.arguments ?? []));
@@ -247,12 +262,39 @@ describe('CCv2 view', () => {
     try {
       writeFileSync(file, original.replace('"solrVersion": "9.10",', '"solrVersion": "9.10" ,,'));
       const roots = await api.ccv2.tree.getChildren();
-      const core = await api.ccv2.tree.getChildren(roots[0]);
-      const outline = await api.ccv2.tree.getChildren(core[0]);
+      const outline = await api.ccv2.tree.getChildren(roots[0]);
       assert.equal(outline.length, 1);
       assert.match(String(api.ccv2.tree.getTreeItem(outline[0]!).label), /^Invalid JSON/);
     } finally {
       writeFileSync(file, original);
     }
+  });
+});
+
+describe('Changes view', () => {
+  it('says why it is empty instead of showing nothing', async () => {
+    const api = await getApi();
+    // the fixture is not a Git repository
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.match(
+      api.changes.tree.message() ?? '',
+      /^(The Git extension is (disabled|not available)\.|No Git repository in this workspace\.)$/,
+    );
+  });
+
+  it('colours changed files and the folders above them, and nothing else', async () => {
+    const api = await getApi();
+    const { ChangeIndex } = await import('../../src/changes/model.js');
+    const { treeUri } = await import('../../src/changes/service.js');
+    const dir = join(api.project.projects[0]!.hybrisDir, 'config');
+    const file = join(dir, 'local.properties');
+    api.changes.service.index = new ChangeIndex([{ path: file, letter: 'M' }], [dir]);
+    const decoration = (path: string) => api.changes.service.provideFileDecoration(treeUri(path));
+    assert.equal(decoration(file)?.badge, 'M');
+    assert.equal(decoration(dir)?.badge, undefined);
+    assert.ok(decoration(dir)?.color, 'the folder is coloured');
+    assert.equal(decoration(join(dir, 'other.properties')), undefined);
+    // files of the editor and of the problem markers keep their own decorations
+    assert.equal(api.changes.service.provideFileDecoration(vscode.Uri.file(file)), undefined);
   });
 });

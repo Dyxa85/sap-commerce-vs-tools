@@ -17,6 +17,8 @@ export async function run(): Promise<void> {
   const file = env('LAB_FILE');
   const maxMinutes = Number(env('LAB_WAIT_MIN', '25'));
 
+  if (env('LAB_TREE') === '1') return dumpTrees(log);
+
   const java = vscode.extensions.getExtension('redhat.java');
   if (!java) throw new Error('redhat.java is not installed in the lab profile');
   await java.activate();
@@ -223,11 +225,28 @@ export async function run(): Promise<void> {
         encoding: 'utf8',
         maxBuffer: 64 << 20,
       });
+      // the memory Activity Monitor shows: RSS leaves out pages macOS has compressed, `footprint` includes them
+      const footprintMb = (pid: string, fallback: number): number => {
+        try {
+          const text = execSync(`footprint -p ${pid}`, {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+          });
+          const m = /Footprint:\s+([\d.]+)\s+(KB|MB|GB)/.exec(text);
+          if (m) return Number(m[1]) * ({ KB: 1 / 1024, MB: 1, GB: 1024 }[m[2] as 'KB'] ?? 1);
+        } catch {
+          // fall through
+        }
+        return fallback;
+      };
       const rows = out
         .split('\n')
         .filter((l) => l.includes('org.eclipse.equinox.launcher') && l.includes(mark))
         .map((l) => l.trim().split(/\s+/))
-        .map((c) => ({ cpu: Number(c[1]), rssMb: Number(c[2]) / 1024 }));
+        .map((c) => ({
+          cpu: Number(c[1]),
+          rssMb: footprintMb(c[0] as string, Number(c[2]) / 1024),
+        }));
       return rows.length
         ? { cpu: Math.max(...rows.map((r) => r.cpu)), rssMb: Math.max(...rows.map((r) => r.rssMb)) }
         : undefined;
@@ -258,6 +277,11 @@ export async function run(): Promise<void> {
     };
 
     await untilIdle('restart (already built profile)');
+
+    // what the server keeps once it has been idle for a while (the heap that the collector does not give back counts)
+    await sleep(Number(env('LAB_STEADY_S', '90')) * 1000);
+    const steady = sampleServer();
+    if (steady) log(`steady state after restart: ${Math.round(steady.rssMb)} MB`);
 
     // a small edit saved to disk
     const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
@@ -299,5 +323,75 @@ export async function run(): Promise<void> {
     append(report, '');
   }
 
+  log('DONE');
+}
+
+/** What the side bar shows for the opened folder (LAB_TREE=1): structure of the views, not pixels. */
+async function dumpTrees(log: (line: string) => void): Promise<void> {
+  type Tree<N> = {
+    getChildren(n?: N): Promise<N[]> | N[];
+    getTreeItem(n: N): vscode.TreeItem;
+    nodeFor?(path: string): Promise<N | undefined>;
+    getParent?(n: N): N | undefined;
+    message?(): string | undefined;
+  };
+  const own = vscode.extensions.all.find((e) => e.packageJSON.name === 'sap-commerce-vs-tools');
+  const api = (await own?.activate()) as {
+    project: { refresh(): Promise<void> };
+    projectTree: Tree<unknown>;
+    ccv2: { service: { refresh(): Promise<void> }; tree: Tree<unknown> };
+    changes: { tree: Tree<unknown> };
+  };
+  await api.project.refresh();
+  await api.ccv2.service.refresh();
+  await sleep(4000); // the Git extension scans the repositories
+  const icon = (item: vscode.TreeItem): string => {
+    const i = item.iconPath as { id?: string; fsPath?: string } | undefined;
+    return i?.id ?? (i?.fsPath ? i.fsPath.split('/').pop()! : '');
+  };
+  const show = async (
+    tree: Tree<unknown>,
+    node: unknown,
+    depth: number,
+    max: number,
+  ): Promise<void> => {
+    const item = tree.getTreeItem(node);
+    const label = typeof item.label === 'string' ? item.label : item.label?.label;
+    log(
+      `${'  '.repeat(depth)}${label}${item.description ? `  [${item.description}]` : ''}  <${icon(item)}>`,
+    );
+    if (depth >= max) return;
+    const children = await tree.getChildren(node);
+    for (const child of children.slice(0, 8)) await show(tree, child, depth + 1, max);
+    if (children.length > 8) log(`${'  '.repeat(depth + 1)}… ${children.length - 8} more`);
+  };
+  log('== Commerce Project');
+  for (const top of await api.projectTree.getChildren()) await show(api.projectTree, top, 0, 1);
+  const tops = await api.projectTree.getChildren();
+  for (const top of tops) {
+    const label = String(api.projectTree.getTreeItem(top).label);
+    for (const child of await api.projectTree.getChildren(top)) {
+      const c = String(api.projectTree.getTreeItem(child).label);
+      if (['Configuration', 'Root'].includes(c)) {
+        log(`== ${label} / ${c}`);
+        await show(api.projectTree, child, 0, 1);
+      }
+    }
+  }
+  log('== CCv2');
+  for (const top of await api.ccv2.tree.getChildren()) await show(api.ccv2.tree, top, 0, 1);
+  log('== Changes');
+  log(`message: ${api.changes.tree.message?.()}`);
+  for (const top of await api.changes.tree.getChildren()) await show(api.changes.tree, top, 0, 1);
+  const file = env('LAB_FILE');
+  if (file && api.projectTree.nodeFor) {
+    let node = await api.projectTree.nodeFor(file);
+    const chain: string[] = [];
+    while (node) {
+      chain.unshift(String(api.projectTree.getTreeItem(node).label));
+      node = api.projectTree.getParent?.(node);
+    }
+    log(`== reveal ${file}\n   ${chain.join(' > ') || '(not shown)'}`);
+  }
   log('DONE');
 }

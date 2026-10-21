@@ -73,8 +73,8 @@ That is all you need to **read, write and explore** a project. Next steps:
   <tr>
     <td valign="top">
       <h3>🗂️ See your structure</h3>
-      <b>Commerce Project</b>: every extension with its real folders and files. <b>CCv2</b>: your repository and an outline of
-      <code>manifest.json</code>.
+      <b>Commerce Project</b>: backend and JavaScript projects with real folders, git changes coloured, the open file selected.
+      <b>CCv2</b>: outline of <code>manifest.json</code>. <b>Changes</b>: what Git reports, per project.
     </td>
     <td valign="top">
       <h3>🕸️ Draw diagrams</h3>

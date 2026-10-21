@@ -4,9 +4,12 @@ import {
   ANT_TARGETS,
   conflictingBuildFiles,
   debugPort,
+  findJdk,
   isValidArgument,
   javaProjectSettings,
+  javaServerSettings,
   packClassFolders,
+  requiredJavaVersion,
   type PlatformProject,
 } from '@sapcommerce-vstools/core';
 import { ANT_TASK, SERVER_TASK, type CommerceTaskProvider } from '../build/tasks.js';
@@ -18,6 +21,16 @@ const JAVA_KEYS = [
   'java.project.referencedLibraries',
   'java.project.outputPath',
 ] as const;
+/** How the server and test runs behave (JDK, memory, no Gradle/Maven import); written next to the project settings. */
+const SERVER_KEYS = [
+  'java.jdt.ls.vmargs',
+  'java.import.gradle.enabled',
+  'java.import.maven.enabled',
+  'java.test.config',
+  'java.configuration.runtimes',
+] as const;
+const ALL_KEYS: readonly string[] = [...JAVA_KEYS, ...SERVER_KEYS];
+type JavaSettings = Record<string, unknown>;
 const LAST_WRITTEN = 'sapcommerce.java.lastWritten';
 
 async function chooseProject(project: ProjectService): Promise<PlatformProject | undefined> {
@@ -172,14 +185,14 @@ export function registerBuildCommands(
     vscode.workspace.getConfiguration('sapcommerce.java').get<string>('mode', 'compiled');
   const workspaceJava = (): string =>
     JSON.stringify(
-      JAVA_KEYS.map((k) => vscode.workspace.getConfiguration().inspect(k)?.workspaceValue ?? null),
+      ALL_KEYS.map((k) => vscode.workspace.getConfiguration().inspect(k)?.workspaceValue ?? null),
     );
 
   /** The settings for this project, in the mode the user chose; packs the Ant build's classes for `compiled`. */
   async function javaSettingsFor(
     p: PlatformProject,
     folder: vscode.WorkspaceFolder,
-  ): Promise<ReturnType<typeof javaProjectSettings>> {
+  ): Promise<JavaSettings> {
     const config = vscode.workspace.getConfiguration('sapcommerce.java');
     const exclude = config.get<string[]>('excludeExtensions', []);
     const options = {
@@ -188,7 +201,18 @@ export function registerBuildCommands(
       exclude,
       maxExtensions: config.get<number>('maxExtensions') || undefined,
     };
-    if (javaMode() === 'sources') return javaProjectSettings(p, options);
+    const mode = javaMode() === 'sources' ? 'sources' : 'compiled';
+    // the JDK the platform insists on, so that tests run on it and not on the (newer) one of the Java server
+    const required = requiredJavaVersion(p.platformDir);
+    const jdk = required === undefined ? undefined : findJdk(required);
+    if (required !== undefined && !jdk)
+      log.warn(
+        `Java: the platform needs JDK ${required}, but none was found; the Java extension's own is used.`,
+      );
+    const server = config.get<boolean>('manageServer', true)
+      ? javaServerSettings({ jdk, mode })
+      : {};
+    if (mode === 'sources') return { ...javaProjectSettings(p, options), ...server };
     const classJarsDir = join(folder.uri.fsPath, CLASS_JARS);
     const result = await packClassFolders(p, classJarsDir, { exclude });
     for (const f of result.failed)
@@ -196,15 +220,15 @@ export function registerBuildCommands(
     log.info(
       `Java: ${result.packed} jars made from the classes folders of the Ant build, ${result.upToDate} up to date, ${result.empty} extensions without classes.`,
     );
-    return javaProjectSettings(p, { ...options, mode: 'compiled', classJarsDir });
+    return { ...javaProjectSettings(p, { ...options, mode: 'compiled', classJarsDir }), ...server };
   }
 
-  async function writeJavaSettings(
-    settings: ReturnType<typeof javaProjectSettings>,
-  ): Promise<void> {
+  async function writeJavaSettings(settings: JavaSettings): Promise<void> {
     const java = vscode.workspace.getConfiguration();
-    for (const key of JAVA_KEYS)
-      await java.update(key, settings[key], vscode.ConfigurationTarget.Workspace);
+    for (const key of ALL_KEYS) {
+      if (key in settings)
+        await java.update(key, settings[key], vscode.ConfigurationTarget.Workspace);
+    }
     await context.workspaceState.update(LAST_WRITTEN, workspaceJava());
   }
 
@@ -228,13 +252,13 @@ export function registerBuildCommands(
     const current = workspaceJava();
     const lastWritten = context.workspaceState.get<string>(LAST_WRITTEN);
     const hasForeign =
-      current !== JSON.stringify(JAVA_KEYS.map(() => null)) && current !== lastWritten;
+      current !== JSON.stringify(ALL_KEYS.map(() => null)) && current !== lastWritten;
 
     const lines = [
       javaMode() === 'sources'
         ? `The sources of all ${p.loaded.length} loaded extensions are compiled by the Java extension. This gives navigation into platform sources but needs several GB of memory.`
         : `Your own extensions are compiled by the Java extension, so you get live errors and completion. Platform and modules are taken from the result of your Ant build (bin/*.jar and the classes folders, packed to ${CLASS_JARS}), so what you see matches what Ant compiled. Run "ant build" first; extensions that are not built yet fall back to their sources.`,
-      `The settings are written to the workspace settings (.vscode/settings.json of "${folder.name}").`,
+      `The settings are written to the workspace settings (.vscode/settings.json of "${folder.name}"), also: the JDK the platform requires for the project and test runs, a memory limit for the Java server (about 1.5 GB), and no Gradle/Maven import.`,
     ];
     if (conflicts.length > 0)
       lines.push(
@@ -287,7 +311,7 @@ export function registerBuildCommands(
           if (!folder) continue;
           const settings = await javaSettingsFor(p, folder);
           const config = vscode.workspace.getConfiguration();
-          const same = JAVA_KEYS.every(
+          const same = Object.keys(settings).every(
             (k) =>
               JSON.stringify(config.inspect(k)?.workspaceValue) === JSON.stringify(settings[k]),
           );
@@ -303,7 +327,7 @@ export function registerBuildCommands(
     if (!vscode.workspace.workspaceFolders?.[0]) return;
     const java = vscode.workspace.getConfiguration();
     try {
-      for (const key of JAVA_KEYS)
+      for (const key of ALL_KEYS)
         await java.update(key, undefined, vscode.ConfigurationTarget.Workspace);
       await context.workspaceState.update(LAST_WRITTEN, undefined);
     } catch (err) {

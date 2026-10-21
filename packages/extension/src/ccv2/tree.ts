@@ -2,19 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import * as vscode from 'vscode';
 import { ccv2 } from '@sapcommerce-vstools/core';
-import { listFolder, parseHidden } from '../project/folders.js';
-import { DEFAULT_HIDDEN, fileItem, folderItem } from '../project/tree.js';
+import { treeIcon } from '../util/icons.js';
 import type { Ccv2Service } from './service.js';
 
 export type Ccv2Node =
   | { kind: 'repo'; root: ccv2.Ccv2Root }
-  | { kind: 'core'; root: ccv2.Ccv2Root; path: string; label: string }
-  | { kind: 'manifest'; file: string }
   | { kind: 'entry'; file: string; entry: ccv2.ManifestEntry }
-  | { kind: 'problem'; file: string; message: string; offset: number }
-  | { kind: 'hybris'; root: ccv2.Ccv2Root }
-  | { kind: 'dir'; path: string; label: string; root: string }
-  | { kind: 'file'; path: string; label: string };
+  | { kind: 'problem'; file: string; message: string; offset: number };
 
 const SECTION_ICONS: Record<string, string> = {
   commerceSuiteVersion: 'tag',
@@ -29,6 +23,7 @@ const SECTION_ICONS: Record<string, string> = {
   webapps: 'globe',
 };
 
+/** What a CCv2 repository defines: the outline of its `manifest.json`. The files themselves are in the other views. */
 export class Ccv2Tree implements vscode.TreeDataProvider<Ccv2Node>, vscode.Disposable {
   private readonly emitter = new vscode.EventEmitter<Ccv2Node | undefined>();
   readonly onDidChangeTreeData = this.emitter.event;
@@ -55,50 +50,24 @@ export class Ccv2Tree implements vscode.TreeDataProvider<Ccv2Node>, vscode.Dispo
     });
   }
 
-  private hidden() {
-    return parseHidden(
-      vscode.workspace
-        .getConfiguration('sapcommerce.project')
-        .get<string[]>('hiddenEntries', DEFAULT_HIDDEN),
-    );
-  }
-
   getTreeItem(node: Ccv2Node): vscode.TreeItem {
     switch (node.kind) {
       case 'repo': {
+        const file = join(node.root.coreCustomize, 'manifest.json');
         const item = new vscode.TreeItem(
           basename(node.root.dir),
           vscode.TreeItemCollapsibleState.Expanded,
         );
-        item.iconPath = new vscode.ThemeIcon('cloud');
-        item.description = 'CCv2 project';
-        item.tooltip = node.root.dir;
+        item.iconPath = treeIcon('ccv2', 'cloud');
+        item.description = 'manifest.json';
+        item.tooltip = file;
+        item.id = `repo:${node.root.coreCustomize}`;
         item.contextValue = 'sapcommerce.ccv2.repo';
-        return item;
-      }
-      case 'core': {
-        const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
-        item.iconPath = new vscode.ThemeIcon('cloud');
-        item.description = 'manifest.json and hybris';
-        item.tooltip = node.path;
-        item.contextValue = 'sapcommerce.folder';
-        return item;
-      }
-      case 'manifest': {
-        const item = new vscode.TreeItem(
-          'manifest.json',
-          vscode.TreeItemCollapsibleState.Collapsed,
-        );
-        item.iconPath = new vscode.ThemeIcon('json');
-        item.description = 'build and deployment definition';
-        item.tooltip = node.file;
         item.command = {
           command: 'vscode.open',
-          title: 'Open',
-          arguments: [vscode.Uri.file(node.file)],
+          title: 'Open manifest.json',
+          arguments: [vscode.Uri.file(file)],
         };
-        item.contextValue = 'sapcommerce.file';
-        item.resourceUri = vscode.Uri.file(node.file);
         return item;
       }
       case 'entry': {
@@ -128,125 +97,49 @@ export class Ccv2Tree implements vscode.TreeDataProvider<Ccv2Node>, vscode.Dispo
         };
         return item;
       }
-      case 'hybris': {
-        const item = new vscode.TreeItem('hybris', vscode.TreeItemCollapsibleState.Collapsed);
-        item.iconPath = new vscode.ThemeIcon('server-environment');
-        item.description =
-          'configuration and custom code – platform and extensions are in "Commerce Project"';
-        item.tooltip = join(node.root.coreCustomize, 'hybris');
-        return item;
-      }
-      case 'dir':
-        return folderItem(node.path, node.label, node.root);
-      case 'file':
-        return fileItem(node.path, node.label);
     }
   }
 
   async getChildren(node?: Ccv2Node): Promise<Ccv2Node[]> {
-    if (!node) {
-      return this.service.roots.map((root) =>
-        root.dir === root.coreCustomize
-          ? ({ kind: 'core', root, path: root.coreCustomize, label: basename(root.dir) } as const)
-          : ({ kind: 'repo', root } as const),
-      );
-    }
+    if (!node) return this.service.roots.map((root) => ({ kind: 'repo' as const, root }));
     switch (node.kind) {
-      case 'repo': {
-        // the repository root: core-customize, js-storefront, scripts, … as they are on disk
-        const entries = await listFolder(node.root.dir, node.root.dir, this.hidden());
-        return entries.map((e) => {
-          if (e.isDir && e.path === node.root.coreCustomize)
-            return { kind: 'core' as const, root: node.root, path: e.path, label: e.label };
-          return e.isDir
-            ? { kind: 'dir' as const, path: e.path, label: e.label, root: node.root.dir }
-            : { kind: 'file' as const, path: e.path, label: e.label };
-        });
-      }
-      case 'core': {
-        const entries = await listFolder(node.path, node.path, this.hidden());
-        const children: Ccv2Node[] = [{ kind: 'manifest', file: join(node.path, 'manifest.json') }];
-        for (const e of entries) {
-          if (e.label === 'manifest.json') continue;
-          if (e.isDir && e.label === 'hybris') children.push({ kind: 'hybris', root: node.root });
-          else if (e.isDir)
-            children.push({ kind: 'dir', path: e.path, label: e.label, root: node.path });
-          else children.push({ kind: 'file', path: e.path, label: e.label });
-        }
-        return children;
-      }
-      case 'manifest': {
-        let text: string;
-        try {
-          text = await readFile(node.file, 'utf8');
-        } catch {
-          return [
-            {
-              kind: 'problem',
-              file: node.file,
-              message: 'manifest.json cannot be read',
-              offset: 0,
-            },
-          ];
-        }
-        const outline = ccv2.manifestOutline(text);
-        if (outline.error) {
-          return [
-            {
-              kind: 'problem',
-              file: node.file,
-              message: `Invalid JSON: ${outline.error.message}`,
-              offset: outline.error.offset,
-            },
-          ];
-        }
-        return outline.entries.map((entry) => ({ kind: 'entry' as const, file: node.file, entry }));
-      }
+      case 'repo':
+        return this.outline(join(node.root.coreCustomize, 'manifest.json'));
       case 'entry':
         return node.entry.children.map((entry) => ({
           kind: 'entry' as const,
           file: node.file,
           entry,
         }));
-      case 'hybris': {
-        // only what a project owns: its configuration and its custom extensions
-        const base = join(node.root.coreCustomize, 'hybris');
-        const wanted: [string, string][] = [
-          [join(base, 'config'), 'config'],
-          [join(base, 'bin', 'custom'), 'bin/custom'],
-        ];
-        const found: Ccv2Node[] = [];
-        for (const [path, label] of wanted) {
-          if (await exists(path))
-            found.push({ kind: 'dir', path, label, root: node.root.coreCustomize });
-        }
-        return found;
-      }
-      case 'dir': {
-        const entries = await listFolder(node.path, node.root, this.hidden());
-        return entries.map((e) =>
-          e.isDir
-            ? { kind: 'dir' as const, path: e.path, label: e.label, root: node.root }
-            : { kind: 'file' as const, path: e.path, label: e.label },
-        );
-      }
       default:
         return [];
     }
+  }
+
+  private async outline(file: string): Promise<Ccv2Node[]> {
+    let text: string;
+    try {
+      text = await readFile(file, 'utf8');
+    } catch {
+      return [{ kind: 'problem', file, message: 'manifest.json cannot be read', offset: 0 }];
+    }
+    const outline = ccv2.manifestOutline(text);
+    if (outline.error) {
+      return [
+        {
+          kind: 'problem',
+          file,
+          message: `Invalid JSON: ${outline.error.message}`,
+          offset: outline.error.offset,
+        },
+      ];
+    }
+    return outline.entries.map((entry) => ({ kind: 'entry' as const, file, entry }));
   }
 
   dispose(): void {
     for (const w of this.manifestWatchers) w.dispose();
     this.subscription.dispose();
     this.emitter.dispose();
-  }
-}
-
-async function exists(path: string): Promise<boolean> {
-  try {
-    await vscode.workspace.fs.stat(vscode.Uri.file(path));
-    return true;
-  } catch {
-    return false;
   }
 }

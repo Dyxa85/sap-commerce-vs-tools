@@ -16,10 +16,13 @@ import {
   classJarPath,
   conflictingBuildFiles,
   debugPort,
+  findJdk,
   isValidArgument,
+  javaServerSettings,
   javaProjectSettings,
   loadPlatform,
   packClassFolders,
+  requiredJavaVersion,
   serverInvocation,
   type PlatformProject,
 } from '../../src/index.js';
@@ -290,5 +293,51 @@ describe('Java project settings', () => {
     make('ws', ['pom.xml']);
     expect(conflictingBuildFiles(join(root, 'ws'))).toEqual(['pom.xml']);
     expect(conflictingBuildFiles(join(root, 'hybris'))).toEqual([]);
+  });
+});
+
+describe('Java server settings', () => {
+  const root = mkdtempSync(join(tmpdir(), 'sapc-jdk-'));
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it('reads the Java version the platform requires', () => {
+    mkdirSync(join(root, 'platform/resources/ant'), { recursive: true });
+    writeFileSync(
+      join(root, 'platform/resources/ant/util.xml'),
+      '<property name="required_java_version" value="21" />',
+    );
+    expect(requiredJavaVersion(join(root, 'platform'))).toBe(21);
+    expect(requiredJavaVersion(join(root, 'missing'))).toBeUndefined();
+  });
+
+  it('finds a JDK by its major version and ignores the others', () => {
+    const jdk = (name: string, version: string): string => {
+      mkdirSync(join(root, 'jvm', name), { recursive: true });
+      writeFileSync(join(root, 'jvm', name, 'release'), `JAVA_VERSION="${version}"\n`);
+      return join(root, 'jvm', name);
+    };
+    const j17 = jdk('17', '17.0.14');
+    const j21 = jdk('21', '21.0.10');
+    const j8 = jdk('8', '1.8.0_392');
+    expect(findJdk(21, [j17, j21])?.home).toBe(j21);
+    expect(findJdk(8, [j8])?.version).toBe(8);
+    expect(findJdk(25, [j17, j21])).toBeUndefined();
+    expect(findJdk(21, [join(root, 'jvm', 'none')])).toBeUndefined();
+  });
+
+  it('pins the JDK, limits memory and keeps Gradle and Maven out', () => {
+    const s = javaServerSettings({ jdk: { version: 21, home: '/jdk21' }, mode: 'compiled' });
+    expect(s['java.configuration.runtimes']).toEqual([
+      { name: 'JavaSE-21', path: '/jdk21', default: true },
+    ]);
+    expect(s['java.jdt.ls.vmargs']).toContain('-XX:+UseG1GC');
+    expect(s['java.jdt.ls.vmargs']).toContain('-Xmx1536m');
+    expect(s['java.import.gradle.enabled']).toBe(false);
+    expect(s['java.import.maven.enabled']).toBe(false);
+    expect(javaServerSettings({ mode: 'sources' })['java.jdt.ls.vmargs']).toContain('-Xmx4G');
+    // no JDK known: leave the choice of the Java extension alone
+    expect(javaServerSettings({ mode: 'compiled' })).not.toHaveProperty(
+      'java.configuration.runtimes',
+    );
   });
 });
