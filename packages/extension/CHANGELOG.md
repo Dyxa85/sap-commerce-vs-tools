@@ -5,6 +5,23 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-10-22
+
+### Fixed
+
+- **Java: imports of backoffice classes were unresolved** (for example
+  `de.hybris.platform.platformbackoffice.variant.VariantAttributesSectionRenderer`). The backoffice module of an
+  extension is compiled into `resources/backoffice/<extension>_bof.jar`, a place the generated settings did not list; the
+  classes of web modules (`web/webroot/WEB-INF/classes`) and of `backoffice/classes` were not used in compiled mode
+  either. All three are now part of the project (the class folders are packed to jars like `classes`). Verified on a real
+  backoffice file: 5 of 5 imports resolve, including the one from `platformbackoffice`.
+- **Unit tests failed with "Can not determine platformhome" / "Can not determine path to core-items.xml".** The platform
+  finds its home through `core-items.xml`, which lives in `ext/core/resources`, and a test run started by the Java Test
+  Runner had no `resources` folder on its class path. _Configure Java_ now writes them to `java.test.config` (`core`
+  first). Reproduced the exact error outside VS Code with the platform's own classes and confirmed that the resources fix it.
+- Settings of other extensions (`java.test.config` belongs to the Test Runner for Java) no longer make _Configure Java_ fail
+  when that extension is not installed; they are skipped and logged.
+
 ## [0.1.6] - 2026-10-21
 
 ### Changed

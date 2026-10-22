@@ -108,6 +108,9 @@ _Configure Java_ also writes four things that are not about the project (switch 
 - **No Gradle/Maven import** (`java.import.gradle.enabled`, `java.import.maven.enabled`). The project is described by the
   settings above; a `build.gradle` somewhere in a CCv2 repository would otherwise make the Java server start Gradle daemons,
   more JVMs of the same JRE.
+- **Tests find the platform.** A test started by the Test Runner needs the `resources` folder of `core` on its class path:
+  the platform finds its home through `core-items.xml` there (without it: "Can not determine platformhome"). The `resources`
+  folders of all loaded extensions are written to `java.test.config`.
 - **Quiet tests**: `java.test.config` with `-XX:+EnableDynamicAgentLoading -Xshare:off` silences the Mockito/Byte Buddy
   warnings ("self-attaching", "Sharing is only supported for boot loader classes") that newer JDKs print.
 

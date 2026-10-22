@@ -282,6 +282,47 @@ describe('Java project settings', () => {
     expect((await packClassFolders(loaded, out)).packed).toBe(1);
   });
 
+  it('takes backoffice jars and web classes of built extensions from the Ant build', async () => {
+    const hybris = join(root, 'hybris');
+    // platformbackoffice-like: classes only in resources/backoffice/<ext>_bof.jar
+    make('hybris/bin/modules/bo/backoffice/testsrc');
+    make('hybris/bin/modules/bo/resources/backoffice', ['bo_bof.jar']);
+    make('hybris/bin/modules/bo/bin', ['boserver.jar']);
+    // a web module with src, compiled into web/webroot/WEB-INF/classes
+    make('hybris/bin/modules/webm/src');
+    make('hybris/bin/modules/webm/web/webroot/WEB-INF/classes/com');
+    writeFileSync(join(hybris, 'bin/modules/webm/web/webroot/WEB-INF/classes/com/A.class'), 'x');
+    // a backoffice module with sources: the jar would be a stale copy in sources mode
+    make('hybris/bin/modules/bosrc/backoffice/src');
+    make('hybris/bin/modules/bosrc/resources/backoffice', ['bosrc_bof.jar']);
+    for (const name of ['bo', 'webm', 'bosrc']) {
+      writeFileSync(
+        join(hybris, `bin/modules/${name}/extensioninfo.xml`),
+        `<extensioninfo><extension name="${name}"/></extensioninfo>`,
+      );
+    }
+    writeFileSync(
+      join(hybris, 'config/localextensions.xml'),
+      '<hybrisconfig><extensions><path dir="${HYBRIS_BIN_DIR}"/><extension name="alpha"/><extension name="bo"/><extension name="webm"/><extension name="bosrc"/></extensions></hybrisconfig>',
+    );
+    const loaded = await loadPlatform(hybris);
+    const libs = (o: Parameters<typeof javaProjectSettings>[1]): string[] =>
+      javaProjectSettings(loaded, o)['java.project.referencedLibraries'].include;
+
+    const compiled = libs({
+      base: root,
+      mode: 'compiled',
+      classJarsDir: join(root, '.sapcommerce/libs'),
+    });
+    expect(compiled).toContain('hybris/bin/modules/bo/resources/backoffice/*.jar');
+    expect(compiled).toContain('hybris/bin/modules/bosrc/resources/backoffice/*.jar');
+    expect(compiled).toContain('.sapcommerce/libs/webm-web.jar');
+
+    const sources = libs({ base: root });
+    expect(sources).toContain('hybris/bin/modules/bo/resources/backoffice/*.jar');
+    expect(sources).not.toContain('hybris/bin/modules/bosrc/resources/backoffice/*.jar');
+  });
+
   it('can leave out tests and single extensions', () => {
     const s = javaProjectSettings(project, { base: root, includeTests: false, exclude: ['alpha'] });
     expect(s['java.project.sourcePaths'].some((p) => p.includes('alpha'))).toBe(false);
@@ -335,6 +376,15 @@ describe('Java server settings', () => {
     expect(s['java.import.gradle.enabled']).toBe(false);
     expect(s['java.import.maven.enabled']).toBe(false);
     expect(javaServerSettings({ mode: 'sources' })['java.jdt.ls.vmargs']).toContain('-Xmx4G');
+    // tests find the platform through the resources of `core`
+    const withResources = javaServerSettings({
+      mode: 'compiled',
+      testClassPaths: ['/p/core/resources'],
+    });
+    expect(withResources['java.test.config']).toEqual({
+      vmArgs: ['-XX:+EnableDynamicAgentLoading', '-Xshare:off'],
+      classPaths: ['/p/core/resources'],
+    });
     // no JDK known: leave the choice of the Java extension alone
     expect(javaServerSettings({ mode: 'compiled' })).not.toHaveProperty(
       'java.configuration.runtimes',

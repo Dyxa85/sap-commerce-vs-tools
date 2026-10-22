@@ -99,12 +99,17 @@ const runtimeName = (version: number): string =>
  * - the server's memory: a collector that gives unused heap back, and a limit the project fits in,
  * - no Gradle/Maven import: the project is described by the settings above, a `build.gradle` somewhere in the tree
  *   would start Gradle daemons,
- * - quiet test runs.
+ * - quiet test runs, with the resources of the extensions on the class path (the platform needs them to start).
  */
 export function javaServerSettings(options: {
   jdk?: Jdk;
   /** `sources` compiles every extension and needs a bigger heap. */
   mode: 'compiled' | 'sources';
+  /**
+   * Folders that tests need on their class path although they hold no classes: the `resources` of the extensions. The
+   * platform finds its home through `core-items.xml` on the class path ("Can not determine platformhome" without it).
+   */
+  testClassPaths?: readonly string[];
 }): Record<string, unknown> {
   const heap = options.mode === 'sources' ? '-Xmx4G' : '-Xmx1536m';
   const settings: Record<string, unknown> = {
@@ -122,6 +127,7 @@ export function javaServerSettings(options: {
     'java.import.maven.enabled': false,
     'java.test.config': {
       vmArgs: ['-XX:+EnableDynamicAgentLoading', '-Xshare:off'],
+      ...(options.testClassPaths?.length ? { classPaths: [...options.testClassPaths] } : {}),
     },
   };
   if (options.jdk) {

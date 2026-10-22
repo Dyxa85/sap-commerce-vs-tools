@@ -1,7 +1,7 @@
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PlatformProject } from '../platform/model.js';
-import { classJarPath } from './settings.js';
+import { CLASS_OUTPUTS, classJarPath } from './settings.js';
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
@@ -91,7 +91,7 @@ export interface PackResult {
   packed: number;
   /** Jars that were already newer than every class. */
   upToDate: number;
-  /** Extensions with an empty or missing `classes` folder. */
+  /** Class folders that are empty or missing (an extension has up to three). */
   empty: number;
   /** Extensions that could not be packed, with the reason. */
   failed: { extension: string; reason: string }[];
@@ -113,33 +113,35 @@ export async function packClassFolders(
   let done = 0;
   for (const ext of extensions) {
     options.onProgress?.(done++, extensions.length);
-    const jar = classJarPath(outDir, ext.name);
-    try {
-      const { entries, newest } = await walk(join(ext.dir, 'classes')).catch(() => ({
-        entries: [] as Entry[],
-        newest: 0,
-      }));
-      if (entries.length === 0) {
-        result.empty++;
-        // after `ant clean` the old jar would describe classes that no longer exist
-        await rm(jar, { force: true });
-        continue;
+    for (const output of CLASS_OUTPUTS) {
+      const jar = classJarPath(outDir, ext.name, output.suffix);
+      try {
+        const { entries, newest } = await walk(join(ext.dir, output.dir)).catch(() => ({
+          entries: [] as Entry[],
+          newest: 0,
+        }));
+        if (entries.length === 0) {
+          result.empty++;
+          // after `ant clean` the old jar would describe classes that no longer exist
+          await rm(jar, { force: true });
+          continue;
+        }
+        const existing = await stat(jar).catch(() => undefined);
+        if (existing && existing.mtimeMs >= newest) {
+          result.upToDate++;
+          continue;
+        }
+        // write next to the target and rename, so the Java server never sees a half-written jar
+        const temporary = `${jar}.${process.pid}.tmp`;
+        await writeFile(temporary, await zipStored(entries));
+        await rename(temporary, jar);
+        result.packed++;
+      } catch (err) {
+        result.failed.push({
+          extension: ext.name,
+          reason: err instanceof Error ? err.message : String(err),
+        });
       }
-      const existing = await stat(jar).catch(() => undefined);
-      if (existing && existing.mtimeMs >= newest) {
-        result.upToDate++;
-        continue;
-      }
-      // write next to the target and rename, so the Java server never sees a half-written jar
-      const temporary = `${jar}.${process.pid}.tmp`;
-      await writeFile(temporary, await zipStored(entries));
-      await rename(temporary, jar);
-      result.packed++;
-    } catch (err) {
-      result.failed.push({
-        extension: ext.name,
-        reason: err instanceof Error ? err.message : String(err),
-      });
     }
   }
   options.onProgress?.(extensions.length, extensions.length);

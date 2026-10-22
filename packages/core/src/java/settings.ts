@@ -41,11 +41,22 @@ const SOURCE_ROOTS = [
   'acceleratoraddon/web/src',
 ];
 const TEST_ROOTS = ['testsrc', 'web/testsrc', 'backoffice/testsrc', 'acceleratoraddon/web/testsrc'];
+const BACKOFFICE_JARS = 'resources/backoffice';
 const LIB_DIRS = ['lib', 'web/webroot/WEB-INF/lib'];
 
-/** Where `packClassFolders` puts the jar of an extension. */
-export function classJarPath(dir: string, extension: string): string {
-  return join(dir, `${extension}.jar`);
+/**
+ * The folders `ant build` compiles classes into, relative to an extension, and the suffix of the jar made from each.
+ * (`bin/*.jar` and `resources/backoffice/*.jar` are jars already.)
+ */
+export const CLASS_OUTPUTS: readonly { dir: string; suffix: string }[] = [
+  { dir: 'classes', suffix: '' },
+  { dir: 'web/webroot/WEB-INF/classes', suffix: '-web' },
+  { dir: 'backoffice/classes', suffix: '-backoffice' },
+];
+
+/** Where `packClassFolders` puts the jar of an extension's class folder. */
+export function classJarPath(dir: string, extension: string, suffix = ''): string {
+  return join(dir, `${extension}${suffix}.jar`);
 }
 
 const posix = (p: string): string => p.split(sep).join('/');
@@ -100,7 +111,9 @@ export function javaProjectSettings(
     // produced anything for (after `ant clean`, or a module that was never built) falls back to its sources
     const built =
       hasJars(join(ext.dir, 'bin')) ||
-      (options.classJarsDir !== undefined && isFilled(join(ext.dir, 'classes')));
+      hasJars(join(ext.dir, BACKOFFICE_JARS)) ||
+      (options.classJarsDir !== undefined &&
+        CLASS_OUTPUTS.some((o) => isFilled(join(ext.dir, o.dir))));
     const asSources = !compiled || ext.category === 'custom' || !built;
     for (const root of asSources ? roots : []) {
       const dir = join(ext.dir, root);
@@ -118,8 +131,17 @@ export function javaProjectSettings(
       const bin = join(ext.dir, 'bin');
       if (hasJars(bin)) include.push(`${shown(bin)}/*.jar`);
     }
-    if (!asSources && options.classJarsDir !== undefined && isFilled(join(ext.dir, 'classes'))) {
-      include.push(shown(classJarPath(options.classJarsDir, ext.name)));
+    // the backoffice module is compiled into `resources/backoffice/<extension>_bof.jar` (that is where, for example,
+    // `de.hybris.platform.platformbackoffice` lives); with `backoffice/src` the Java server compiles it itself
+    if (!asSources || !isDir(join(ext.dir, 'backoffice', 'src'))) {
+      const backoffice = join(ext.dir, BACKOFFICE_JARS);
+      if (hasJars(backoffice)) include.push(`${shown(backoffice)}/*.jar`);
+    }
+    if (!asSources && options.classJarsDir !== undefined) {
+      for (const output of CLASS_OUTPUTS) {
+        if (isFilled(join(ext.dir, output.dir)))
+          include.push(shown(classJarPath(options.classJarsDir, ext.name, output.suffix)));
+      }
     }
   }
 

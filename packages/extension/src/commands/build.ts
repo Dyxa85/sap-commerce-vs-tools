@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
 import {
@@ -209,8 +210,13 @@ export function registerBuildCommands(
       log.warn(
         `Java: the platform needs JDK ${required}, but none was found; the Java extension's own is used.`,
       );
+    // `core` first: its resources hold core-items.xml, which is how the platform finds its home in a test run
+    const resources = [...p.loaded]
+      .sort((a, b) => Number(b.name === 'core') - Number(a.name === 'core'))
+      .map((e) => join(e.dir, 'resources'))
+      .filter((dir) => existsSync(dir));
     const server = config.get<boolean>('manageServer', true)
-      ? javaServerSettings({ jdk, mode })
+      ? javaServerSettings({ jdk, mode, testClassPaths: resources })
       : {};
     if (mode === 'sources') return { ...javaProjectSettings(p, options), ...server };
     const classJarsDir = join(folder.uri.fsPath, CLASS_JARS);
@@ -226,8 +232,17 @@ export function registerBuildCommands(
   async function writeJavaSettings(settings: JavaSettings): Promise<void> {
     const java = vscode.workspace.getConfiguration();
     for (const key of ALL_KEYS) {
-      if (key in settings)
+      if (!(key in settings)) continue;
+      try {
         await java.update(key, settings[key], vscode.ConfigurationTarget.Workspace);
+      } catch (err) {
+        // the project settings must be written; a setting of another extension (e.g. java.test.config of the Test
+        // Runner for Java) may not exist when that extension is not installed
+        if ((JAVA_KEYS as readonly string[]).includes(key)) throw err;
+        log.warn(
+          `Java: ${key} was not written: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
     await context.workspaceState.update(LAST_WRITTEN, workspaceJava());
   }
